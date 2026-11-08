@@ -673,7 +673,12 @@ function playView(view){
   app.append(h('h1',{class:'big',style:'margin:6px 0 4px'},'Pick a game'),h('p',{class:'muted',style:'margin:0 0 14px'},'The host will tell you which one is up.'));
   const tiles=[['tambola','🎶','Song Tambola','Your ticket','#ffb703'],['headsup','🤔','Heads Up','Forehead guessing','#ff4d8d'],['charades','🎭','Charades','Act it out','#06d6a0'],['pictionary','✏️','Pictionary','Draw it','#4cc9f0'],['taboo','🚫','Taboo','Don’t say it','#fb8500'],['mafia','🔫','Ramgarh Mafia','Secret role','#9b5de5']];
   app.append(h('div',{class:'tiles'},tiles.map(([k,em,t,s,c])=>h('button',{class:'tile',style:`background:${c}`,onclick:()=>go('/play/'+k)},h('div',{class:'em'},em),h('div',{},h('b',{},t),h('small',{},s))))));
+  app.append(h('div',{class:'center',style:'margin-top:26px'},
+    h('p',{class:'muted',style:'font-size:14px;margin:0 0 8px'},'Refreshing is safe — your ticket, marks and Mafia role are saved on this phone.'),
+    btn('🔄 Start over on this phone','ghost sm',()=>{if(confirm('Start over? This clears your Tambola name & marks, your Mafia code, and the cards you have already seen on this phone.')){guestReset();toast('Fresh start!');render();}})));
 }
+// clears only guest-side data, never the host scoreboard
+function guestReset(){try{Object.keys(localStorage).filter(k=>/^dg_(tname|tmarks_|seenrules_|mafiaMe)/.test(k)||(k.startsWith('dg_used_')&&!/^dg_used_h(ch_|pict)/.test(k))).forEach(k=>localStorage.removeItem(k));}catch(e){}}
 
 function playTambola(){
   const wrap=h('div',{class:'stack'});
@@ -692,6 +697,7 @@ function playTambola(){
   paint();
   wrap.append(h('div',{class:'row'},h('h2',{class:'grow'},'🎟️ '+name+"'s ticket")),grid,status,
     h('div',{class:'card'},h('b',{},'Prizes'),h('ul',{class:'muted',style:'margin:6px 0 0;padding-left:20px'},PRIZES.map(([,l,d])=>h('li',{},l+' — '+d)))),
+    h('div',{class:'center'},btn('🧹 Clear my marks (new game)','ghost sm',()=>{if(confirm('Clear all your marks for a new Tambola game? Your ticket stays the same.')){store.set(key,Array(12).fill(false));render();}})),
     h('p',{class:'muted center',style:'font-size:14px'},'Shout the moment you win! Not you? ',h('a',{href:'#',style:'color:var(--muted)',onclick:e=>{e.preventDefault();if(confirm('Switch name? You will get a different ticket.')){store.set('tname','');render();}}},'Change name')));
   return wrap;
 }
