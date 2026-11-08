@@ -274,7 +274,61 @@ function awardRow(game,pts=1,label){
     btn(`+${pts} ${names[1]}`,'t1',()=>S.add(1,pts,game)),
     label||null);
 }
-function rules(title,items){return h('details',{class:'rules'},h('summary',{},'📖 '+title),h('ol',{},items.map(i=>h('li',{},i))));}
+/* rules: one sheet per game, same on host and phones */
+const RULES={
+  headsup:{em:'🤔',title:'Heads Up',time:'60 seconds per turn',
+    steps:['Teams take turns. One player holds the phone on their forehead, screen facing their team.','The team gives clues: describe, act, sing, hum — anything except saying the name or spelling it.','A teammate taps ✓ Correct when it’s guessed, or Pass to skip.','Get through as many as you can before the timer ends.'],
+    nope:['Saying the name or any part of it','Spelling it out'],
+    score:'1 point per correct guess. Tell the host your total at the end.'},
+  charades:{em:'🎭',title:'Dumb Charades',time:'90 seconds per turn',
+    steps:['Teams take turns. One actor per turn.','The actor picks a level: Easy, Medium or Hard.','Only the actor peeks at the movie (press & hold the card, or use the Charades tile on a phone).','Act it out for your team.','Signs: fingers up = number of words · fingers on forearm = syllables · tug your ear = “sounds like”.'],
+    nope:['Talking, whispering or lip-syncing','Pointing at letters or writing','Humming the songs'],
+    score:'Easy +1 · Medium +2 · Hard +3 if your team guesses in time.'},
+  pictionary:{em:'✏️',title:'Filmy Pictionary',time:'60 seconds per turn',
+    steps:['Teams take turns. One drawer per turn.','Only the drawer peeks at the movie.','Draw on the drawing pad, or on a phone with the Pictionary tile, and show your team.','Your team shouts guesses until they get it.'],
+    nope:['Letters, numbers or words in the drawing','Talking, acting or pointing at things in the room'],
+    score:'+2 if your team guesses in time.'},
+  taboo:{em:'🚫',title:'Filmy Taboo',time:'60 seconds per turn',
+    steps:['Teams take turns. One clue-giver per turn.','Describe the movie on screen to your team in words.','Someone from the OTHER team watches your screen and hits 🚨 BUZZ if you slip.','Tap ✓ Correct when your team gets it, or Pass to skip.'],
+    nope:['The movie name or any of the 4 banned words','Acting, humming or “sounds like”','Spelling'],
+    score:'+1 per correct, −1 per buzz. Tell the host your net total.'},
+  tambola:{em:'🎶',title:'Song Tambola',time:'About 20 minutes',
+    steps:['Open the link → Song Tambola → type your REAL name. That gives you your own ticket of 12 songs.','The host plays a short clip of a song.','If that song is on your ticket, tap it to mark it.','The moment you complete a prize, SHOUT it!','The host checks your ticket by name.'],
+    nope:['Changing your name for a better ticket','Marking songs that haven’t been played — false claim = sing the next song solo 😈'],
+    score:'Prizes (individual, not team): Early Five (any 5) · First Line (any full row) · Four Corners · Full House (all 12).'},
+  mafia:{em:'🔫',title:'Ramgarh Mafia',time:'20+ minutes',
+    steps:['Sit in a circle and number yourselves 1, 2, 3… The host narrates and doesn’t play.','Open the link → Ramgarh Mafia → type the game code and YOUR seat number. Press & hold to see your role. Tell no one!','🌙 NIGHT: everyone closes their eyes. Dacoits wake and silently pick a victim. Basanti wakes and protects one person. Thakur wakes and points at a suspect — the host nods yes or no.','☀️ DAY: the host reveals who was attacked (unless Basanti saved them). Everyone argues and votes one person out.','Repeat night and day.'],
+    nope:['Peeking during the night','Showing your phone to anyone','Talking once you’re out'],
+    score:'Villagers win when every dacoit is out. Dacoits win when they equal the villagers.'},
+  quiz:{em:'🎬',title:'Filmy Quiz',time:'About 20 minutes',
+    steps:['Three rounds: Emoji Movie, 3-Word Plot and Dialogue Complete Karo.','The host shows one question at a time on the TV.','First team to SHOUT the right answer gets the point.','Wrong answer? The other team gets one chance to steal.'],
+    nope:['Phones or Googling','Shouting every movie you know until one is right — host’s call'],
+    score:'+1 per correct answer.'},
+  antakshari:{em:'🎤',title:'Antakshari',time:'About 15 minutes',
+    steps:['Teams take turns singing a Bollywood song (at least one line).','Your song must start with the LAST letter/sound of the previous song.','You get 10 seconds to start singing.','Every few turns the host spins the wheel — the next song must fit that twist.'],
+    nope:['Repeating a song already sung','Humming without words'],
+    score:'Stuck for 10 seconds = −1 and the turn passes.'},
+  couples:{em:'💑',title:'Couples Face-Off',time:'About 10 minutes',
+    steps:['Each couple has one partner on each team. Partners face each other.','The host reads a question.','On “1-2-3!” both partners answer at the SAME time (point at each other for “who” questions).'],
+    nope:['Looking at your partner for hints','Changing your answer after hearing theirs'],
+    score:'Match = +1 to BOTH teams. No match = the room decides who’s wrong, and the other team gets +1.'}
+};
+function rulesSheet(key){
+  const R=RULES[key];if(!R)return;
+  const fs=fullscreen();fs.style.overflow='auto';
+  fs.append(h('div',{style:'max-width:720px;margin:0 auto;padding:20px 16px 40px;width:100%'},
+    h('div',{class:'row'},h('div',{style:'font-size:54px'},R.em),h('div',{class:'grow'},h('h1',{class:'big'},R.title),h('span',{class:'pill'},'⏱ '+R.time))),
+    h('div',{class:'spacer'}),
+    h('div',{class:'card'},h('h3',{},'How to play'),h('ol',{style:'font-size:20px;line-height:1.45;padding-left:24px;margin:8px 0 0'},R.steps.map(s=>h('li',{style:'margin-bottom:6px'},s)))),
+    h('div',{class:'spacer'}),
+    h('div',{class:'card',style:'border-color:rgba(239,71,111,.5)'},h('h3',{},'🚫 Not allowed'),h('ul',{style:'font-size:19px;line-height:1.45;padding-left:24px;margin:8px 0 0'},R.nope.map(s=>h('li',{},s)))),
+    h('div',{class:'spacer'}),
+    h('div',{class:'card',style:'border-color:rgba(255,183,3,.6)'},h('h3',{},'🏆 Points'),h('p',{style:'font-size:20px;margin:8px 0 0'},R.score)),
+    h('div',{class:'spacer'}),
+    btn('Got it 👍','big block',()=>fs.remove())));
+}
+const rulesBtn=(key,cls)=>btn('📖 Rules','violet '+(cls||''),()=>rulesSheet(key));
+function rulesBar(key){const R=RULES[key];return h('div',{class:'row'},h('div',{class:'grow'},h('b',{style:'font-size:20px'},R.em+' '+R.title),' ',h('span',{class:'muted'},'· '+R.time)),rulesBtn(key));}
 
 /* ---------------- host data (encrypted) ---------------- */
 function decrypt(pin){
@@ -393,8 +447,8 @@ function hostAct(){
     h('button',{class:'tab'+(isCh?' on':''),onclick:()=>{st.mode='charades';st.card=null;save();render();}},'🎭 Dumb Charades'),
     h('button',{class:'tab'+(!isCh?' on':''),onclick:()=>{st.mode='pictionary';st.card=null;save();render();}},'✏️ Pictionary')));
   wrap.append(isCh
-    ?rules('Dumb Charades rules (read aloud)',['One actor from the team on turn. The actor picks a level: Easy 1 pt, Medium 2, Hard 3.','Only the actor peeks at the movie. No talking, no lip-syncing, no pointing at objects that spell it.','Standard signs: fingers for number of words, tap the forearm for syllables, hold the ear for “sounds like”.','90 seconds. Guessed = points. Then the other team goes.'])
-    :rules('Pictionary rules (read aloud)',['One drawer from the team on turn. Only the drawer peeks at the movie.','Draw on the drawing pad (laptop/tablet) or on a phone using the Pictionary tile. No letters, no numbers, no talking.','60 seconds. Guessed = 2 points. Then the other team goes.']));
+    ?rulesBar('charades')
+    :rulesBar('pictionary'));
   wrap.append(h('div',{class:'team t'+st.turn,style:'justify-content:center;font-size:24px;font-weight:800'},(isCh?'🎭 ':'✏️ ')+names[st.turn]+"'s turn"));
   if(isCh)wrap.append(h('div',{class:'row',style:'justify-content:center'},Object.entries(CHARADES).map(([k,L])=>
     h('button',{class:'tab'+(k===st.level?' on':''),onclick:()=>{st.level=k;st.card=null;save();render();}},`${L.label} · +${L.pts}`))));
@@ -446,7 +500,7 @@ function hostQuiz(){
   const save=()=>store.set('quizpos',st);
   const R=rounds[st.r],item=R.items[st.i];
   const wrap=h('div',{class:'stack'});
-  wrap.append(rules('How to play (read aloud)',['Host shows a question on the TV.','First team to SHOUT the right answer gets 1 point.','Wrong answer? The other team gets one chance to steal.','No phones / Googling — instant disqualification 😄']));
+  wrap.append(rulesBar('quiz'));
   wrap.append(h('div',{class:'row'},keys.map(k=>h('button',{class:'tab'+(k===st.r?' on':''),onclick:()=>{st.r=k;st.i=0;st.shown=false;st.rev=false;save();render();}},rounds[k].title))));
   const card=h('div',{class:'card stage'});
   card.append(h('div',{class:'row',style:'justify-content:center'},h('span',{class:'pill'},R.title),h('span',{class:'pill'},`${st.i+1} / ${R.items.length}`),used[st.r+st.i]?h('span',{class:'pill',style:'background:var(--teal);color:var(--ink)'},'played'):null));
@@ -471,7 +525,7 @@ function hostAntakshari(){
   const names=S.teams();
   const st=store.get('ant',{turn:0,used:[]});
   const wrap=h('div',{class:'stack'});
-  wrap.append(rules('How to play (read aloud)',['Teams take turns singing a Bollywood song.','Your song must start with the LAST letter (sound) of the previous song.','10 seconds to start singing, or you lose a point and the turn passes.','Every few turns, the host spins the wheel — the next song must fit the category.']));
+  wrap.append(rulesBar('antakshari'));
   const turnEl=h('div',{class:'team t'+st.turn,style:'justify-content:center;font-size:24px;font-weight:800'},'🎤 '+names[st.turn]+"'s turn");
   const t=makeTimer(10,{onEnd:()=>toast('Time up! −1')});
   const catEl=h('div',{class:'big',style:'min-height:1.2em'},st.cat||'Spin for a twist!');
@@ -506,7 +560,7 @@ function hostTambola(){
   const newGame=()=>{g={order:shuffle(SONGS.map((s,i)=>i)),n:0,winners:{}};store.set('tambola',g);};
   if(!g)newGame();
   const wrap=h('div',{class:'stack'});
-  wrap.append(rules('How to play (read aloud)',['Everyone opens the WhatsApp link → Tambola → types their name. That gives you your own ticket of 12 songs.','I play a short clip. If the song is on your ticket, tap it.','Shout your prize the moment you have it: Early Five, First Line, Four Corners, Full House.','I verify every claim. False claim = you sing the next song solo 😈']));
+  wrap.append(rulesBar('tambola'));
   const called=g.order.slice(0,g.n);
   const cur=g.n?SONGS[g.order[g.n-1]]:null;
   const yt=s=>'https://www.youtube.com/results?search_query='+encodeURIComponent(s[0]+' '+s[1]+' song');
@@ -548,12 +602,7 @@ function hostMafia(){
   let st=store.get('mafia',null);
   const wrap=h('div',{class:'stack'});
   const make=(n)=>{const L='ABCDEFGHJKLMNPRSTUVWXYZ';let c='';for(let i=0;i<3;i++)c+=L[Math.floor(Math.random()*L.length)];st={code:c+n,dead:[],show:false};store.set('mafia',st);render();};
-  wrap.append(rules('How to play (read aloud)',[
-    'Sit in a circle and number yourselves 1, 2, 3… (host does not play).',
-    'Open the link → Ramgarh Mafia → type the game code and YOUR seat number. Press and hold to peek at your role. Tell no one!',
-    'NIGHT: everyone closes eyes. Dacoits open eyes, silently agree on a victim. Basanti wakes and points at someone to protect. Thakur wakes and points at a suspect — host nods yes/no.',
-    'DAY: host reveals who was attacked (unless Basanti saved them). Everyone argues, accuses, and votes one person out.',
-    'Villagers win when all dacoits are out. Dacoits win when they equal the villagers.']));
+  wrap.append(rulesBar('mafia'));
   if(!st){
     wrap.append(h('div',{class:'card stage'},h('div',{style:'font-size:56px'},'🏜️🔫'),h('h2',{},'How many players? (not counting you)'),
       h('div',{class:'row',style:'justify-content:center'},[6,7,8,9,10,11,12].map(n=>btn(String(n),n===9?'pink':'',()=>make(n))))));
@@ -579,7 +628,7 @@ function hostMafia(){
 function hostCouples(){
   const qs=HOST.couples;const st=store.get('couples',{i:0,shown:false});const names=S.teams();
   const wrap=h('div',{class:'stack'});
-  wrap.append(rules('How to play (read aloud)',['Each couple: one partner per team. Partners face each other.','Host reads the question. On “1-2-3!” both answer at the SAME time (or point, for “who” questions).','Match = +1 to BOTH teams. No match = the room decides who’s wrong and the other team gets the point 😄']));
+  wrap.append(rulesBar('couples'));
   const card=h('div',{class:'card stage'},h('span',{class:'pill'},`Question ${st.i+1} / ${qs.length}`));
   if(!st.shown)card.append(h('div',{class:'hidden-q',onclick:()=>{st.shown=true;store.set('couples',st);render();}},h('div',{class:'big'},'💑 Tap to show question')));
   else card.append(h('div',{class:'huge pop',style:'font-size:clamp(28px,5.5vw,56px)'},qs[st.i]),h('div',{class:'big ans'},'1 · 2 · 3!'));
@@ -605,7 +654,7 @@ function hostPhones(){
     ['taboo','🚫 Taboo','Describe the movie without the 4 banned words. 60s. Points = net score.',[1,2,3,5]]];
   for(const [k,title,desc,pts] of games){
     const custom=(t)=>{const p=prompt(`Points for ${names[t]} (${title})`);if(p&&!isNaN(+p))S.add(t,+p,k);};
-    wrap.append(h('div',{class:'card'},h('h3',{},title),h('p',{class:'muted',style:'margin:4px 0 10px'},desc),
+    wrap.append(h('div',{class:'card'},h('div',{class:'row'},h('h3',{class:'grow'},title),rulesBtn(k,'sm')),h('p',{class:'muted',style:'margin:4px 0 10px'},desc),
       [0,1].map(t=>h('div',{class:'row',style:'margin-bottom:8px'},h('b',{style:'min-width:120px'},names[t]),pts.map(p=>btn('+'+p,'sm t'+t,()=>S.add(t,p,k))),btn('other…','sm ghost',()=>custom(t))))));
   }
   return wrap;
@@ -614,7 +663,12 @@ function hostPhones(){
 /* ---------------- player (phones) ---------------- */
 function playView(view){
   const views={tambola:playTambola,headsup:playHeadsUp,charades:playCharades,pictionary:playPictionary,taboo:playTaboo,mafia:playMafia};
-  if(views[view]){app.append(topbar(btn('← Games','ghost sm',()=>go('/play'))));return app.append(views[view]());}
+  if(views[view]){
+    app.append(topbar(h('div',{class:'row'},rulesBtn(view,'sm'),btn('← Games','ghost sm',()=>go('/play')))));
+    app.append(views[view]());
+    if(!store.get('seenrules_'+view,false)){store.set('seenrules_'+view,true);rulesSheet(view);}
+    return;
+  }
   app.append(topbar());
   app.append(h('h1',{class:'big',style:'margin:6px 0 4px'},'Pick a game'),h('p',{class:'muted',style:'margin:0 0 14px'},'The host will tell you which one is up.'));
   const tiles=[['tambola','🎶','Song Tambola','Your ticket','#ffb703'],['headsup','🤔','Heads Up','Forehead guessing','#ff4d8d'],['charades','🎭','Charades','Act it out','#06d6a0'],['pictionary','✏️','Pictionary','Draw it','#4cc9f0'],['taboo','🚫','Taboo','Don’t say it','#fb8500'],['mafia','🔫','Ramgarh Mafia','Secret role','#9b5de5']];
