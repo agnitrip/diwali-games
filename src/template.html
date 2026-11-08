@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diwali Game Night</title>
+<meta name="description" content="Bollywood party games for Diwali night">
+<meta property="og:title" content="🪔 Diwali Game Night">
+<meta property="og:description" content="Tap to join the games: Tambola, Heads Up, Charades, Pictionary, Taboo and Ramgarh Mafia">
+<meta name="theme-color" content="#1d0b3a">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪔</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1d0b3a; --bg2:#2a1052; --card:#341466; --card2:#40197a; --line:rgba(255,255,255,.12);
+  --text:#fff; --muted:#cbb8ee; --ink:#1b0a33;
+  --gold:#ffb703; --orange:#fb8500; --pink:#ff4d8d; --teal:#06d6a0; --red:#ef476f; --blue:#4cc9f0; --violet:#9b5de5;
+  --t0:#ffb703; --t1:#ff4d8d;
+  --r:20px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg);
+  background-image:
+    radial-gradient(circle at 12% -10%, rgba(255,183,3,.22), transparent 40%),
+    radial-gradient(circle at 100% 10%, rgba(255,77,141,.22), transparent 45%),
+    radial-gradient(circle at 50% 120%, rgba(155,93,229,.35), transparent 50%);
+  background-attachment:fixed;
+  color:var(--text); font-family:'Baloo 2',system-ui,sans-serif; font-size:17px; line-height:1.35;
+  -webkit-tap-highlight-color:transparent; overflow-x:hidden;
+}
+button{font-family:inherit}
+#app{max-width:1100px;margin:0 auto;padding:12px 16px 40px;min-height:100%}
+h1,h2,h3{margin:0;line-height:1.1;font-weight:800}
+.muted{color:var(--muted)}
+.center{text-align:center}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1}
+.stack{display:flex;flex-direction:column;gap:12px}
+.spacer{height:14px}
+
+/* chunky party buttons */
+.btn{
+  --c:var(--gold); --tc:var(--ink);
+  background:var(--c); color:var(--tc); border:0; border-radius:16px;
+  padding:12px 20px; font-size:18px; font-weight:800; cursor:pointer;
+  box-shadow:0 5px 0 rgba(0,0,0,.35), inset 0 -3px 0 rgba(0,0,0,.12);
+  transition:transform .06s, box-shadow .06s; user-select:none; touch-action:manipulation;
+}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.pink{--c:var(--pink);--tc:#fff}.btn.teal{--c:var(--teal)}.btn.red{--c:var(--red);--tc:#fff}
+.btn.blue{--c:var(--blue)}.btn.violet{--c:var(--violet);--tc:#fff}.btn.ghost{--c:rgba(255,255,255,.12);--tc:#fff}
+.btn.t0{--c:var(--t0)}.btn.t1{--c:var(--t1);--tc:#fff}
+.btn.big{padding:18px 26px;font-size:22px;border-radius:20px}
+.btn.sm{padding:6px 12px;font-size:15px;border-radius:12px;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.btn.block{width:100%}
+
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+
+/* top bar */
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.logo{font-weight:800;font-size:22px;letter-spacing:.3px;display:flex;align-items:center;gap:8px;cursor:pointer}
+.logo .d{font-size:28px;animation:flick 2.4s infinite}
+@keyframes flick{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) scale(1.06)}}
+
+/* score strip */
+.strip{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.team{border-radius:18px;padding:8px 14px;display:flex;align-items:center;gap:10px;color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.3)}
+.team.t0{background:var(--t0)}.team.t1{background:var(--t1);color:#fff}
+.team .nm{font-weight:800;font-size:18px;cursor:pointer;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team .sc{font-size:34px;font-weight:800;line-height:1}
+.team.lead .nm::after{content:" 👑"}
+.bump{animation:bump .5s}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+
+/* tabs */
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;margin-bottom:8px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:0;border-radius:999px;padding:8px 16px;font-weight:700;font-size:16px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer}
+.tab.on{background:#fff;color:var(--ink)}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.tile{border:0;border-radius:22px;padding:18px 14px;text-align:left;color:var(--ink);cursor:pointer;min-height:130px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 6px 0 rgba(0,0,0,.35);transition:transform .08s}
+.tile:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.tile .em{font-size:40px}
+.tile b{font-size:20px;display:block}
+.tile small{font-size:14px;opacity:.8;font-weight:600}
+
+/* big reveal card */
+.stage{min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px}
+.huge{font-size:clamp(34px,7vw,76px);font-weight:800;line-height:1.05}
+.big{font-size:clamp(24px,4.5vw,44px);font-weight:800;line-height:1.1}
+.ans{color:var(--gold)}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-weight:700;font-size:14px;background:rgba(255,255,255,.14)}
+.pop{animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.hidden-q{border:3px dashed rgba(255,255,255,.3);border-radius:20px;padding:30px;cursor:pointer;width:100%}
+
+details.rules{background:rgba(255,255,255,.07);border-radius:16px;padding:10px 14px;margin-bottom:12px}
+details.rules summary{cursor:pointer;font-weight:700}
+details.rules ol,details.rules ul{margin:8px 0 2px;padding-left:22px}
+
+.timer{font-size:clamp(44px,9vw,90px);font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.timer.low{color:var(--red);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.5}}
+
+input.field{width:100%;font:inherit;font-size:20px;font-weight:700;padding:12px 16px;border-radius:14px;border:2px solid var(--line);background:rgba(0,0,0,.25);color:#fff;outline:none}
+input.field:focus{border-color:var(--gold)}
+
+/* tambola */
+.ticket{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:#fff7e0;padding:10px;border-radius:18px;box-shadow:0 6px 0 rgba(0,0,0,.35)}
+.cell{border:0;border-radius:12px;background:#fff;color:var(--ink);min-height:74px;padding:6px;font-weight:800;font-size:15px;line-height:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;box-shadow:inset 0 0 0 2px #f1dfae;position:relative}
+.cell small{font-weight:600;font-size:11px;opacity:.6;margin-top:3px}
+.cell.on{background:var(--pink);color:#fff;box-shadow:none}
+.cell.on::after{content:"✓";position:absolute;top:2px;right:6px;font-size:14px}
+.cell.called{background:var(--teal)}
+.calledlist{display:flex;flex-wrap:wrap;gap:6px}
+.calledlist span{background:rgba(255,255,255,.12);border-radius:10px;padding:2px 10px;font-size:14px}
+
+/* full-screen phone games */
+.fs{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;background:var(--bg)}
+.fs .bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:10px}
+.split{flex:1;display:grid;grid-template-columns:1fr 1fr}
+.split button{border:0;font-size:28px;font-weight:800;color:#fff;cursor:pointer}
+.word-over{position:absolute;left:0;right:0;top:30%;text-align:center;pointer-events:none;padding:0 16px}
+canvas.pad{flex:1;width:100%;background:#fff;touch-action:none;display:block}
+.swatch{width:34px;height:34px;border-radius:50%;border:3px solid #fff;cursor:pointer}
+.swatch.on{outline:3px solid var(--gold)}
+
+/* mafia */
+.rolecard{border-radius:26px;padding:26px;text-align:center;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;user-select:none;-webkit-user-select:none;touch-action:none}
+.rolecard .em{font-size:80px}
+.roles-table{width:100%;border-collapse:collapse}
+.roles-table td{padding:6px 8px;border-bottom:1px solid var(--line)}
+.dead{opacity:.4;text-decoration:line-through}
+
+table.score{width:100%;border-collapse:collapse;font-size:18px}
+table.score th,table.score td{padding:8px;border-bottom:1px solid var(--line);text-align:center}
+table.score th:first-child,table.score td:first-child{text-align:left}
+
+.confetti{position:fixed;top:-20px;font-size:26px;z-index:50;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#fff;color:var(--ink);font-weight:800;padding:10px 18px;border-radius:999px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:520px){.team .sc{font-size:28px}.team .nm{font-size:16px}#app{padding:10px 12px 40px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const HOSTDATA = "__HOSTDATA__";
+
+/* ---------------- data (guest-visible) ---------------- */
+const SONGS = [
+  ["Tujhe Dekha To","DDLJ"],["Chaiyya Chaiyya","Dil Se.."],["Kal Ho Naa Ho","Kal Ho Naa Ho"],["Tum Hi Ho","Aashiqui 2"],
+  ["Kajra Re","Bunty Aur Babli"],["London Thumakda","Queen"],["Badtameez Dil","Yeh Jawaani Hai Deewani"],["Gallan Goodiyaan","Dil Dhadakne Do"],
+  ["Mauja Hi Mauja","Jab We Met"],["Chammak Challo","Ra.One"],["Kesariya","Brahmastra"],["Tere Bina","Guru"],
+  ["Dil Chahta Hai","Dil Chahta Hai"],["Kuch Kuch Hota Hai","Kuch Kuch Hota Hai"],["Ainvayi Ainvayi","Band Baaja Baaraat"],["Desi Girl","Dostana"],
+  ["Sheila Ki Jawani","Tees Maar Khan"],["Munni Badnaam Hui","Dabangg"],["Jai Ho","Slumdog Millionaire"],["Dola Re Dola","Devdas"],
+  ["Tujh Mein Rab Dikhta Hai","Rab Ne Bana Di Jodi"],["Señorita","Zindagi Na Milegi Dobara"],["Balam Pichkari","Yeh Jawaani Hai Deewani"],["Nagada Sang Dhol","Ram-Leela"],
+  ["Lungi Dance","Chennai Express"],["Kar Gayi Chull","Kapoor & Sons"],["Channa Mereya","Ae Dil Hai Mushkil"],["Apna Time Aayega","Gully Boy"],
+  ["Ghungroo","War"],["Jhoome Jo Pathaan","Pathaan"],["What Jhumka?","Rocky Aur Rani"],["Chaleya","Jawan"],
+  ["Ek Do Teen","Tezaab"],["Didi Tera Devar Deewana","Hum Aapke Hain Koun"],["Pehla Nasha","Jo Jeeta Wohi Sikandar"],["Hawa Hawai","Mr. India"],
+  ["Kala Chashma","Baar Baar Dekho"],["Bole Chudiyan","Kabhi Khushi Kabhie Gham"],["It's the Time to Disco","Kal Ho Naa Ho"],["Deewani Mastani","Bajirao Mastani"],
+  ["Raataan Lambiyan","Shershaah"],["Dus Bahane","Dus"],["Gerua","Dilwale"],["Mere Sapno Ki Rani","Aradhana"]
+];
+const HEADSUP = ["Gabbar Singh","Mogambo","Basanti","Thakur","Raj Malhotra","Simran","Poo","Geet","Munna Bhai","Circuit","Rancho","Chatur","Virus (3 Idiots)","Crime Master Gogo","Baburao","Chulbul Pandey","Devdas","Chandramukhi","Kabir Khan (Chak De)","Rani (Queen)","Bajirao","Jaadoo","Mr. India","Anjali","Manjulika","Pushpa",
+  "Shah Rukh Khan","Amitabh Bachchan","Salman Khan","Aamir Khan","Rekha","Madhuri Dixit","Sridevi","Kajol","Deepika Padukone","Ranveer Singh","Alia Bhatt","Priyanka Chopra","Hrithik Roshan","Akshay Kumar","Kareena Kapoor","Govinda","Rajinikanth","Dharmendra","Hema Malini","Anil Kapoor","Johnny Lever","Paresh Rawal","Kangana Ranaut","Ranbir Kapoor","Katrina Kaif","Shahid Kapoor","Vicky Kaushal","A.R. Rahman","Lata Mangeshkar","Kishore Kumar","Arijit Singh","Karan Johar","Farah Khan","Dev Anand"];
+const CHARADES = {
+  easy:{pts:1,label:"Easy",color:"teal",items:["Sholay","Dangal","PK","Don","Lagaan","Queen","Dhoom","Krrish","Devdas","Ghajini","Pathaan","Jawan","War","Race","Golmaal","Kick","Fanaa","Sultan","Singham","Bodyguard","Rockstar","Barfi!","Pink","Swades","Black"]},
+  medium:{pts:2,label:"Medium",color:"gold",items:["Kuch Kuch Hota Hai","Dil Chahta Hai","Jab We Met","Chak De! India","Om Shanti Om","Taare Zameen Par","Hera Pheri","Munna Bhai MBBS","Kal Ho Naa Ho","Bhaag Milkha Bhaag","Rab Ne Bana Di Jodi","Andaz Apna Apna","Gully Boy","Chennai Express","Jodhaa Akbar","Rang De Basanti","Dil Dhadakne Do","Bajirao Mastani","Ek Tha Tiger","Mr. India","Koi... Mil Gaya","Badhaai Ho"]},
+  hard:{pts:3,label:"Hard",color:"pink",items:["Kabhi Khushi Kabhie Gham","Dilwale Dulhania Le Jayenge","Zindagi Na Milegi Dobara","Hum Aapke Hain Koun..!","Jaane Tu... Ya Jaane Na","Kabhi Alvida Naa Kehna","Main Hoon Na","Jo Jeeta Wohi Sikandar","Rocky Aur Rani Kii Prem Kahaani","Shubh Mangal Saavdhan","Pyaar Ka Punchnama","Mujhse Shaadi Karogi","Tanu Weds Manu","Dum Laga Ke Haisha","Dil Toh Pagal Hai","Hum Saath-Saath Hain","Yeh Jawaani Hai Deewani","Toilet: Ek Prem Katha","Ae Dil Hai Mushkil"]}
+};
+const PICTIONARY = ["Sholay","Lagaan","3 Idiots","Taare Zameen Par","Chennai Express","Ek Tha Tiger","Dhoom","Mr. India","Krrish","Golmaal","Padman","Toilet: Ek Prem Katha","Baahubali","Don","Race","Chak De! India","Queen","Dangal","Kites","Rockstar","Dil Se","Robot","Sultan","Swades","Rang De Basanti","Ghajini","Guide","Mother India","Pushpa","Om Shanti Om","Jab We Met","Haathi Mere Saathi","Fan","Bodyguard","Singham","Lungi Dance","Mustard field (DDLJ)","Diya","Rangoli","Dhol","Mehendi","Mogambo"];
+const TABOO = [
+  ["Sholay",["Gabbar","Amitabh","Dharmendra","Basanti"]],["DDLJ",["Shah Rukh","Kajol","Train","Simran"]],["3 Idiots",["Aamir","Engineering","Rancho","College"]],
+  ["Lagaan",["Cricket","Aamir","Tax","British"]],["Dangal",["Wrestling","Aamir","Daughters","Phogat"]],["Kabhi Khushi Kabhie Gham",["Shah Rukh","Kajol","Family","Poo"]],
+  ["Kuch Kuch Hota Hai",["Shah Rukh","Kajol","Rani","Friendship"]],["Jab We Met",["Kareena","Shahid","Train","Geet"]],["Om Shanti Om",["Shah Rukh","Deepika","Reincarnation","Film"]],
+  ["Chak De! India",["Hockey","Shah Rukh","Women","Coach"]],["Munna Bhai MBBS",["Sanjay Dutt","Doctor","Circuit","Hug"]],["Hera Pheri",["Akshay","Paresh","Baburao","Money"]],
+  ["Mr. India",["Anil Kapoor","Invisible","Mogambo","Sridevi"]],["Zindagi Na Milegi Dobara",["Spain","Hrithik","Friends","Road trip"]],["Queen",["Kangana","Honeymoon","Paris","Wedding"]],
+  ["Gully Boy",["Ranveer","Rap","Mumbai","Alia"]],["PK",["Aamir","Alien","Remote","God"]],["Devdas",["Shah Rukh","Aishwarya","Madhuri","Alcohol"]],
+  ["Taare Zameen Par",["Aamir","Dyslexia","Child","Painting"]],["Andaz Apna Apna",["Aamir","Salman","Comedy","Gogo"]],["Dil Chahta Hai",["Aamir","Goa","Friends","Saif"]],
+  ["Kal Ho Naa Ho",["Shah Rukh","New York","Preity","Dies"]],["Bajirao Mastani",["Ranveer","Deepika","Priyanka","Peshwa"]],["Hum Aapke Hain Koun..!",["Salman","Madhuri","Wedding","Dog"]],
+  ["Jawan",["Shah Rukh","Soldier","Father","Nayanthara"]],["Bhool Bhulaiyaa",["Akshay","Ghost","Manjulika","Palace"]],["Krrish",["Hrithik","Superhero","Mask","Jaadoo"]]
+];
+const WHEEL = ["Song with “Dil” in it 💗","Rain song 🌧️","90s only 📼","Shah Rukh song 👐","Sad song — sung happily 😭➜😄","Wedding song 💍","Song with a number in it 🔢","Pre-1980 classic 🎞️","Dance number — everyone stands! 💃","Song with a name in it (Sheila, Munni…) 📛","Hero picked by the other team 🎯","Duet — two people sing 👫","Festival song (Holi, Diwali…) 🪔","Song from the last 5 years 🆕"];
+const ROLES = {
+  dacoit:{name:"Gabbar's Dacoit",em:"🔫",bg:"linear-gradient(160deg,#ef476f,#7b1e3a)",desc:"You're in Gabbar's gang. Each night, wake up with your gang and pick one villager to eliminate. By day, blend in. Win when dacoits equal villagers."},
+  thakur:{name:"Thakur",em:"🕵️",bg:"linear-gradient(160deg,#4cc9f0,#25507a)",desc:"You're the detective. Each night, point at one person — the host will nod if they're a dacoit. Guide Ramgarh without getting caught."},
+  basanti:{name:"Basanti",em:"🛡️",bg:"linear-gradient(160deg,#06d6a0,#0b6b55)",desc:"You're the protector. Each night, point at one person (can be yourself) — if the dacoits pick them, they survive."},
+  villager:{name:"Ramgarh Villager",em:"🌾",bg:"linear-gradient(160deg,#ffb703,#b26b00)",desc:"Honest villager. No night powers — just your instincts. Find the dacoits and vote them out by day."}
+};
+const GAMES = {charades:"Charades",headsup:"Heads Up",pictionary:"Pictionary",taboo:"Taboo",quiz:"Quiz",antakshari:"Antakshari",couples:"Couples Face-Off",other:"Other"};
+
+/* ---------------- helpers ---------------- */
+function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h;}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffle(arr,rng=Math.random){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const norm = s => String(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+const store = {
+  get(k,d){try{const v=localStorage.getItem('dg_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem('dg_'+k,JSON.stringify(v));}catch(e){}}
+};
+function h(tag,attrs,...kids){
+  const el=document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs||{})){
+    if(k==='class')el.className=v; else if(k==='style')el.style.cssText=v;
+    else if(k.startsWith('on'))el.addEventListener(k.slice(2),v);
+    else if(v!==false&&v!=null)el.setAttribute(k,v===true?'':v);
+  }
+  for(const c of kids.flat()){if(c==null||c===false)continue;el.append(c.nodeType?c:String(c));}
+  return el;
+}
+const btn=(label,cls,on)=>h('button',{class:'btn '+(cls||''),onclick:on},label);
+let audioCtx;
+function beep(freq=880,dur=.15,type='sine'){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.value=freq;g.gain.value=.15;o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+dur);o.stop(audioCtx.currentTime+dur);}catch(e){}}
+function buzzer(){beep(220,.6,'sawtooth');try{navigator.vibrate&&navigator.vibrate(400)}catch(e){}}
+function ding(){beep(1046,.12);setTimeout(()=>beep(1318,.18),110);}
+function toast(msg){const t=h('div',{class:'toast pop'},msg);document.body.append(t);setTimeout(()=>t.remove(),1800);}
+function confetti(n=40){const em=['🪔','✨','🎉','🌼','💥','🎆'];for(let i=0;i<n;i++){const c=h('div',{class:'confetti',style:`left:${Math.random()*100}vw;animation-duration:${2+Math.random()*2.5}s;animation-delay:${Math.random()*.6}s`},em[i%em.length]);document.body.append(c);setTimeout(()=>c.remove(),5200);}}
+
+/* cleanup between screens (timers, listeners) */
+let cleanups=[];
+function onCleanup(f){cleanups.push(f);}
+function runCleanup(){cleanups.forEach(f=>{try{f()}catch(e){}});cleanups=[];document.querySelectorAll('.fs').forEach(e=>e.remove());}
+
+function makeTimer(secs,{onEnd,onTick,big=true}={}){
+  let left=secs,iv=null;
+  const el=h('div',{class:big?'timer':'timer',style:big?'':'font-size:40px'},fmt(left));
+  function fmt(s){return s>=60?Math.floor(s/60)+':'+String(s%60).padStart(2,'0'):String(s);}
+  function paint(){el.textContent=fmt(left);el.classList.toggle('low',left<=10&&left>0);}
+  const api={el,
+    start(){if(iv)return;iv=setInterval(()=>{left--;paint();onTick&&onTick(left);if(left<=3&&left>0)beep(660,.08);if(left<=0){api.stop();buzzer();onEnd&&onEnd();}},1000);},
+    stop(){clearInterval(iv);iv=null;},
+    reset(s=secs){api.stop();left=s;paint();},
+    get running(){return !!iv},get left(){return left}
+  };
+  onCleanup(api.stop);
+  return api;
+}
+
+/* ---------------- scoring (host device) ---------------- */
+const S = {
+  teams(){return store.get('teams',['Team Laddoo','Team Jalebi']);},
+  log(){return store.get('log',[]);},
+  totals(){const t=[0,0];for(const e of S.log())t[e.t]+=e.p;return t;},
+  add(t,p,game){const log=S.log();log.push({t,p,g:game||'other',ts:Date.now()});store.set('log',log);paintStrip(t);toast(`${p>0?'+':''}${p} ${S.teams()[t]}`);if(p>0)ding();},
+  undo(){const log=S.log();const e=log.pop();store.set('log',log);paintStrip();if(e)toast('Undid '+(e.p>0?'+':'')+e.p+' '+S.teams()[e.t]);}
+};
+let stripEl=null;
+function scoreStrip(){
+  const names=S.teams();
+  stripEl=h('div',{class:'strip'},[0,1].map(i=>h('div',{class:'team t'+i,id:'team'+i},
+    h('span',{class:'nm',title:'Tap to rename',onclick:()=>{const n=prompt('Team name',names[i]);if(n){const t=S.teams();t[i]=n.trim();store.set('teams',t);render();}}},names[i]),
+    h('span',{class:'sc'},'0'))));
+  setTimeout(()=>paintStrip(),0);
+  return stripEl;
+}
+function paintStrip(bumped){
+  if(!stripEl||!stripEl.isConnected)return;
+  const t=S.totals();
+  [0,1].forEach(i=>{const team=stripEl.querySelector('#team'+i);team.querySelector('.sc').textContent=t[i];team.classList.toggle('lead',t[i]>t[1-i]);});
+  if(bumped!=null){const sc=stripEl.querySelector('#team'+bumped+' .sc');sc.classList.remove('bump');void sc.offsetWidth;sc.classList.add('bump');}
+}
+function awardRow(game,pts=1,label){
+  const names=S.teams();
+  return h('div',{class:'row',style:'justify-content:center'},
+    btn(`+${pts} ${names[0]}`,'t0',()=>S.add(0,pts,game)),
+    btn(`+${pts} ${names[1]}`,'t1',()=>S.add(1,pts,game)),
+    label||null);
+}
+function rules(title,items){return h('details',{class:'rules'},h('summary',{},'📖 '+title),h('ol',{},items.map(i=>h('li',{},i))));}
+
+/* ---------------- host data (encrypted) ---------------- */
+function decrypt(pin){
+  try{
+    const bin=atob(HOSTDATA);const bytes=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+    const rng=mulberry32(hashStr('diwali|'+pin));
+    for(let i=0;i<bytes.length;i++)bytes[i]^=Math.floor(rng()*256);
+    const obj=JSON.parse(new TextDecoder().decode(bytes));
+    return obj.ok==='diwali'?obj:null;
+  }catch(e){return null;}
+}
+let HOST=null;
+function tryUnlock(){if(HOST)return true;let pin;try{pin=sessionStorage.getItem('dg_pin')||localStorage.getItem('dg_pin');}catch(e){}if(pin){HOST=decrypt(pin);}return !!HOST;}
+
+/* ---------------- router ---------------- */
+const app=document.getElementById('app');
+function go(hash){location.hash=hash;}
+window.addEventListener('hashchange',render);
+function render(){
+  runCleanup();app.innerHTML='';stripEl=null;window.scrollTo(0,0);
+  const parts=location.hash.replace(/^#\/?/,'').split('/');
+  const [area,view]=parts;
+  if(area==='host'){if(!tryUnlock())return app.append(pinScreen());return hostView(view||'score');}
+  if(area==='play'){return playView(view);}
+  return app.append(landing());
+}
+function topbar(extra){return h('div',{class:'topbar'},h('div',{class:'logo',onclick:()=>go('/')},h('span',{class:'d'},'🪔'),'Diwali Game Night'),h('div',{class:'grow'}),extra||null);}
+
+/* ---------------- landing ---------------- */
+function landing(){
+  return h('div',{class:'stack'},topbar(),
+    h('div',{class:'card center stage',style:'min-height:340px'},
+      h('div',{style:'font-size:64px'},'🪔🎬🎶'),
+      h('h1',{class:'huge'},'Shubh Deepavali!'),
+      h('p',{class:'muted',style:'margin:0;font-size:20px'},'Bollywood games for the night. Grab your phone and join your team.'),
+      h('div',{class:'row',style:'justify-content:center;margin-top:8px'},
+        btn("🎉 I'm playing",'pink big',()=>go('/play')),
+        btn('🎤 Host','ghost big',()=>go('/host')))));
+}
+function pinScreen(){
+  const inp=h('input',{class:'field',type:'password',inputmode:'numeric',placeholder:'Host PIN',autocomplete:'off',style:'text-align:center;letter-spacing:8px;font-size:28px'});
+  const remember=h('input',{type:'checkbox',checked:true});
+  const tryIt=()=>{const d=decrypt(inp.value.trim());if(!d){buzzer();inp.value='';inp.placeholder='Wrong PIN';return;}HOST=d;try{sessionStorage.setItem('dg_pin',inp.value.trim());if(remember.checked)localStorage.setItem('dg_pin',inp.value.trim());}catch(e){}render();};
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')tryIt();});
+  setTimeout(()=>inp.focus(),50);
+  return h('div',{class:'stack'},topbar(),h('div',{class:'card stage',style:'max-width:420px;margin:30px auto'},
+    h('div',{style:'font-size:50px'},'🔒'),h('h2',{},'Host only'),h('p',{class:'muted',style:'margin:0'},'Quiz answers and the scoreboard live here.'),
+    inp,h('label',{class:'muted row',style:'justify-content:center'},remember,'Remember on this device'),btn('Unlock','big block',tryIt),
+    h('a',{href:'#/play',style:'color:var(--muted)'},"I'm a player →")));
+}
+
+/* ---------------- host ---------------- */
+const HOST_TABS=[['score','🏆 Scoreboard'],['act','🎭 Charades & Pictionary'],['quiz','🎬 Quiz'],['antakshari','🎤 Antakshari'],['tambola','🎶 Tambola'],['mafia','🔫 Mafia'],['couples','💑 Couples'],['phones','📱 Phone games']];
+function hostView(view){
+  app.append(topbar(btn('Lock','ghost sm',()=>{try{sessionStorage.removeItem('dg_pin');localStorage.removeItem('dg_pin');}catch(e){}HOST=null;go('/');})));
+  app.append(scoreStrip());
+  app.append(h('div',{class:'tabs'},HOST_TABS.map(([k,l])=>h('button',{class:'tab'+(k===view?' on':''),onclick:()=>go('/host/'+k)},l))));
+  const views={score:hostScore,act:hostAct,quiz:hostQuiz,antakshari:hostAntakshari,tambola:hostTambola,mafia:hostMafia,couples:hostCouples,phones:hostPhones};
+  app.append((views[view]||hostScore)());
+}
+function guestLink(){return location.origin+location.pathname+'#/play';}
+function hostScore(){
+  const names=S.teams(),log=S.log(),tot=S.totals();
+  const by={};for(const e of log){by[e.g]=by[e.g]||[0,0];by[e.g][e.t]+=e.p;}
+  const rows=Object.keys(by).map(g=>h('tr',{},h('td',{},GAMES[g]||g),h('td',{},by[g][0]),h('td',{},by[g][1])));
+  const share='https://wa.me/?text='+encodeURIComponent('🪔 Diwali Game Night! Open this on your phone for Tambola tickets, Heads Up, Charades & more: '+guestLink());
+  return h('div',{class:'stack'},
+    h('div',{class:'card'},
+      h('h2',{},'Scores by game'),h('div',{class:'spacer'}),
+      log.length?h('table',{class:'score'},h('tr',{},h('th',{},'Game'),h('th',{},names[0]),h('th',{},names[1])),rows,
+        h('tr',{style:'font-weight:800;font-size:22px'},h('td',{},'Total'),h('td',{},tot[0]),h('td',{},tot[1])))
+      :h('p',{class:'muted'},'No points yet. Tap a team name above to rename it.'),
+      h('div',{class:'spacer'}),
+      h('div',{class:'row'},
+        btn('↩︎ Undo last','ghost sm',()=>{S.undo();render();}),
+        btn('+1 / −1 manual','ghost sm',()=>{const t=prompt(`Which team? 1 = ${names[0]}, 2 = ${names[1]}`);const p=prompt('Points (e.g. 5 or -2)');if((t==='1'||t==='2')&&p&&!isNaN(+p)){S.add(+t-1,+p,'other');render();}}),
+        h('div',{class:'grow'}),
+        btn('🏁 Announce winner','big',()=>announce()),
+        btn('Reset all','red sm',()=>{if(confirm('Clear ALL scores?')){store.set('log',[]);render();}}))),
+    h('div',{class:'card'},
+      h('h2',{},'📲 Share with guests'),
+      h('p',{class:'muted'},'Guests only see phone games — no quiz answers, no scoreboard.'),
+      h('div',{class:'row'},h('a',{class:'btn teal',href:share,target:'_blank',style:'text-decoration:none'},'Share on WhatsApp'),
+        btn('Copy link','ghost',()=>{navigator.clipboard&&navigator.clipboard.writeText(guestLink());toast('Link copied');}))),
+    h('div',{class:'card'},h('h2',{},'Suggested run of show'),
+      h('ol',{class:'muted',style:'margin:8px 0 0;padding-left:22px;line-height:1.7'},
+        h('li',{},'Heads Up warm-up — 10 min (📱)'),h('li',{},'Charades / Pictionary / Taboo — 20 min (📱)'),
+        h('li',{},'Filmy Quiz — 20 min (🎬)'),h('li',{},'Antakshari with twist wheel — 15 min (🎤)'),
+        h('li',{},'Couples Face-Off — 10 min (💑)'),h('li',{},'Song Tambola finale — 20 min (🎶)'),h('li',{},'Ramgarh Mafia for the night owls (🔫)'))));
+}
+function announce(){
+  const t=S.totals(),n=S.teams();
+  const fs=h('div',{class:'fs',onclick:()=>fs.remove()});
+  const w=t[0]===t[1]?null:(t[0]>t[1]?0:1);
+  fs.append(h('div',{class:'stage',style:'flex:1;padding:20px'},
+    h('div',{style:'font-size:90px'},w==null?'🤝':'🏆'),
+    h('div',{class:'huge pop'},w==null?"It's a tie!":n[w]+' wins!'),
+    h('div',{class:'big muted'},`${n[0]} ${t[0]} · ${n[1]} ${t[1]}`),
+    h('p',{class:'muted'},'Tap anywhere to close')));
+  document.body.append(fs);confetti(80);ding();
+}
+
+/* charades & pictionary, host-run */
+function hostAct(){
+  const names=S.teams();
+  const st=store.get('act',{mode:'charades',turn:0,level:'medium',card:null});
+  const save=()=>store.set('act',st);
+  const isCh=st.mode==='charades';
+  const pts=isCh?CHARADES[st.level].pts:2,secs=isCh?90:60;
+  const newCard=()=>{st.card=isCh?deckDraw('hch_'+st.level,CHARADES[st.level].items):deckDraw('hpict',PICTIONARY);save();};
+  if(!st.card)newCard();
+  const nextTurn=()=>{st.turn=1-st.turn;st.card=null;save();render();};
+  const wrap=h('div',{class:'stack'});
+  wrap.append(h('div',{class:'row'},
+    h('button',{class:'tab'+(isCh?' on':''),onclick:()=>{st.mode='charades';st.card=null;save();render();}},'🎭 Dumb Charades'),
+    h('button',{class:'tab'+(!isCh?' on':''),onclick:()=>{st.mode='pictionary';st.card=null;save();render();}},'✏️ Pictionary')));
+  wrap.append(isCh
+    ?rules('Dumb Charades rules (read aloud)',['One actor from the team on turn. The actor picks a level: Easy 1 pt, Medium 2, Hard 3.','Only the actor peeks at the movie. No talking, no lip-syncing, no pointing at objects that spell it.','Standard signs: fingers for number of words, tap the forearm for syllables, hold the ear for “sounds like”.','90 seconds. Guessed = points. Then the other team goes.'])
+    :rules('Pictionary rules (read aloud)',['One drawer from the team on turn. Only the drawer peeks at the movie.','Draw on the drawing pad (laptop/tablet) or on a phone using the Pictionary tile. No letters, no numbers, no talking.','60 seconds. Guessed = 2 points. Then the other team goes.']));
+  wrap.append(h('div',{class:'team t'+st.turn,style:'justify-content:center;font-size:24px;font-weight:800'},(isCh?'🎭 ':'✏️ ')+names[st.turn]+"'s turn"));
+  if(isCh)wrap.append(h('div',{class:'row',style:'justify-content:center'},Object.entries(CHARADES).map(([k,L])=>
+    h('button',{class:'tab'+(k===st.level?' on':''),onclick:()=>{st.level=k;st.card=null;save();render();}},`${L.label} · +${L.pts}`))));
+  // secret card: press & hold so the TV/room can't see it
+  const front=h('div',{class:'stack center'},h('div',{class:'em'},'🤫'),h('div',{class:'big'},(isCh?'Actor':'Drawer')+': press & hold to peek'),h('div',{class:'muted'},'Everyone else look away!'));
+  const back=h('div',{class:'stack center',style:'display:none'},h('div',{class:'muted'},isCh?CHARADES[st.level].label:'Pictionary'),h('div',{class:'huge'},st.card));
+  const card=h('div',{class:'rolecard',style:'min-height:200px;background:linear-gradient(160deg,#40197a,#1d0b3a);border:2px solid var(--line);cursor:pointer'},front,back);
+  card.addEventListener('pointerdown',e=>{e.preventDefault();front.style.display='none';back.style.display='';});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>card.addEventListener(ev,()=>{front.style.display='';back.style.display='none';}));
+  card.addEventListener('contextmenu',e=>e.preventDefault());
+  const t=makeTimer(secs,{onEnd:()=>toast("Time's up!")});
+  wrap.append(card);
+  wrap.append(h('div',{class:'card stage',style:'min-height:0'},t.el,
+    h('div',{class:'row',style:'justify-content:center'},
+      btn(`▶ Start ${secs}s`,'teal',()=>{t.reset();t.start();}),
+      isCh?null:btn('🖌️ Open drawing pad','violet',()=>openPad(secs,st.card)),
+      btn('🔄 New card','ghost',()=>{newCard();render();})),
+    h('div',{class:'row',style:'justify-content:center'},
+      btn(`✓ Guessed! +${pts} ${names[st.turn]}`,'big t'+st.turn,()=>{t.stop();S.add(st.turn,pts,st.mode);confetti(25);setTimeout(nextTurn,700);}),
+      btn('✗ Missed — next team','red',()=>{t.stop();nextTurn();}))));
+  return wrap;
+}
+function openPad(secs,word){
+  const fs=fullscreen();
+  const t=makeTimer(secs,{big:false});
+  const canvas=h('canvas',{class:'pad'});
+  let color='#1b0a33',size=6;
+  const sw=['#1b0a33','#ef476f','#fb8500','#06d6a0','#4cc9f0'].map(c=>{const s=h('button',{class:'swatch'+(c===color?' on':''),style:`background:${c}`,onclick:()=>{color=c;size=6;fs.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on'));s.classList.add('on');}});return s;});
+  const peek=h('button',{class:'btn ghost sm'},'🤫 hold to peek');
+  peek.addEventListener('pointerdown',()=>peek.textContent=word);['pointerup','pointerleave'].forEach(ev=>peek.addEventListener(ev,()=>peek.textContent='🤫 hold to peek'));
+  fs.append(h('div',{class:'bar'},btn('✕ Close','ghost sm',()=>{t.stop();fs.remove();}),t.el,peek),
+    h('div',{style:'flex:1;display:flex'},canvas),
+    h('div',{class:'bar'},h('div',{class:'row'},sw,btn('🧽','ghost sm',()=>{color='#ffffff';size=26;}),btn('Clear','ghost sm',()=>ctx.clearRect(0,0,canvas.width,canvas.height))),btn('▶ Start','teal',()=>t.start())));
+  const ctx=canvas.getContext('2d');
+  requestAnimationFrame(()=>{const r=canvas.getBoundingClientRect(),d=window.devicePixelRatio||1;canvas.width=r.width*d;canvas.height=r.height*d;ctx.scale(d,d);ctx.lineCap='round';ctx.lineJoin='round';});
+  let drawing=false,last=null;
+  const pos=e=>{const r=canvas.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];};
+  canvas.addEventListener('pointerdown',e=>{drawing=true;last=pos(e);canvas.setPointerCapture(e.pointerId);if(!t.running)t.start();});
+  canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);ctx.strokeStyle=color;ctx.lineWidth=size;ctx.beginPath();ctx.moveTo(...last);ctx.lineTo(...p);ctx.stroke();last=p;});
+  ['pointerup','pointercancel'].forEach(ev=>canvas.addEventListener(ev,()=>drawing=false));
+}
+
+/* quiz */
+function hostQuiz(){
+  const rounds=HOST.quiz;const keys=Object.keys(rounds);
+  const st=store.get('quizpos',{r:keys[0],i:0,shown:false,rev:false});
+  if(!rounds[st.r])st.r=keys[0];
+  const used=store.get('quizused',{});
+  const save=()=>store.set('quizpos',st);
+  const R=rounds[st.r],item=R.items[st.i];
+  const wrap=h('div',{class:'stack'});
+  wrap.append(rules('How to play (read aloud)',['Host shows a question on the TV.','First team to SHOUT the right answer gets 1 point.','Wrong answer? The other team gets one chance to steal.','No phones / Googling — instant disqualification 😄']));
+  wrap.append(h('div',{class:'row'},keys.map(k=>h('button',{class:'tab'+(k===st.r?' on':''),onclick:()=>{st.r=k;st.i=0;st.shown=false;st.rev=false;save();render();}},rounds[k].title))));
+  const card=h('div',{class:'card stage'});
+  card.append(h('div',{class:'row',style:'justify-content:center'},h('span',{class:'pill'},R.title),h('span',{class:'pill'},`${st.i+1} / ${R.items.length}`),used[st.r+st.i]?h('span',{class:'pill',style:'background:var(--teal);color:var(--ink)'},'played'):null));
+  if(!st.shown){
+    card.append(h('div',{class:'hidden-q',onclick:()=>{st.shown=true;save();render();}},h('div',{class:'big'},'🙈 Tap to show question '+(st.i+1)),h('div',{class:'muted'},R.hint)));
+  }else{
+    const q=st.r==='emoji'?h('div',{class:'huge pop',style:'font-size:clamp(50px,11vw,110px)'},item[0]):h('div',{class:'huge pop'},item[0]);
+    card.append(h('div',{class:'muted'},R.hint),q);
+    if(st.rev){card.append(h('div',{class:'big ans pop'},item[1]));if(item[2])card.append(h('div',{class:'pill'},'🎬 '+item[2]));}
+    else card.append(btn('Reveal answer','pink big',()=>{st.rev=true;used[st.r+st.i]=1;store.set('quizused',used);save();render();}));
+  }
+  wrap.append(card);
+  wrap.append(awardRow('quiz',1));
+  wrap.append(h('div',{class:'row',style:'justify-content:space-between'},
+    btn('← Prev','ghost',()=>{st.i=Math.max(0,st.i-1);st.shown=false;st.rev=false;save();render();}),
+    btn('Next →','',()=>{st.i=Math.min(R.items.length-1,st.i+1);st.shown=false;st.rev=false;save();render();})));
+  return wrap;
+}
+
+/* antakshari */
+function hostAntakshari(){
+  const names=S.teams();
+  const st=store.get('ant',{turn:0,used:[]});
+  const wrap=h('div',{class:'stack'});
+  wrap.append(rules('How to play (read aloud)',['Teams take turns singing a Bollywood song.','Your song must start with the LAST letter (sound) of the previous song.','10 seconds to start singing, or you lose a point and the turn passes.','Every few turns, the host spins the wheel — the next song must fit the category.']));
+  const turnEl=h('div',{class:'team t'+st.turn,style:'justify-content:center;font-size:24px;font-weight:800'},'🎤 '+names[st.turn]+"'s turn");
+  const t=makeTimer(10,{onEnd:()=>toast('Time up! −1')});
+  const catEl=h('div',{class:'big',style:'min-height:1.2em'},st.cat||'Spin for a twist!');
+  let spinning=false;
+  const spin=()=>{
+    if(spinning)return;spinning=true;
+    let pool=WHEEL.filter(c=>!st.used.includes(c));if(!pool.length){st.used=[];pool=WHEEL.slice();}
+    const pick=pool[Math.floor(Math.random()*pool.length)];
+    let d=40,n=0;
+    const step=()=>{catEl.textContent=WHEEL[n++%WHEEL.length];beep(500+(n%5)*80,.04,'square');d*=1.12;if(d<420){const to=setTimeout(step,d);onCleanup(()=>clearTimeout(to));}else{catEl.textContent=pick;catEl.classList.remove('pop');void catEl.offsetWidth;catEl.classList.add('pop');ding();st.cat=pick;st.used.push(pick);store.set('ant',st);spinning=false;}};
+    step();
+  };
+  wrap.append(h('div',{class:'card stage'},
+    h('div',{style:'font-size:56px'},'🎡'),catEl,
+    h('div',{class:'row',style:'justify-content:center'},btn('Spin the wheel','violet big',spin),btn('Clear twist','ghost',()=>{st.cat='';store.set('ant',st);catEl.textContent='Normal round — no twist';}))));
+  wrap.append(h('div',{class:'card stage',style:'min-height:0'},turnEl,t.el,
+    h('div',{class:'row',style:'justify-content:center'},
+      btn('▶ Start 10s','teal',()=>{t.reset();t.start();}),
+      btn('✓ Sang it! Next team','',()=>{t.reset();st.turn=1-st.turn;store.set('ant',st);render();}),
+      btn('✗ Stuck (−1)','red',()=>{t.reset();S.add(st.turn,-1,'antakshari');st.turn=1-st.turn;store.set('ant',st);setTimeout(render,500);}))));
+  return wrap;
+}
+
+/* tambola */
+function ticketFor(name){return shuffle(SONGS.map((s,i)=>i),mulberry32(hashStr('ticket|'+norm(name)))).slice(0,12);}
+const PRIZES=[['early','Early Five','Any 5 songs marked',(c)=>c.filter(Boolean).length>=5],
+  ['line','First Line','Any full row of 3',(c)=>[0,1,2,3].some(r=>c[r*3]&&c[r*3+1]&&c[r*3+2])],
+  ['corners','Four Corners','All 4 corner songs',(c)=>c[0]&&c[2]&&c[9]&&c[11]],
+  ['full','Full House','All 12 songs',(c)=>c.every(Boolean)]];
+function hostTambola(){
+  let g=store.get('tambola',null);
+  const newGame=()=>{g={order:shuffle(SONGS.map((s,i)=>i)),n:0,winners:{}};store.set('tambola',g);};
+  if(!g)newGame();
+  const wrap=h('div',{class:'stack'});
+  wrap.append(rules('How to play (read aloud)',['Everyone opens the WhatsApp link → Tambola → types their name. That gives you your own ticket of 12 songs.','I play a short clip. If the song is on your ticket, tap it.','Shout your prize the moment you have it: Early Five, First Line, Four Corners, Full House.','I verify every claim. False claim = you sing the next song solo 😈']));
+  const called=g.order.slice(0,g.n);
+  const cur=g.n?SONGS[g.order[g.n-1]]:null;
+  const yt=s=>'https://www.youtube.com/results?search_query='+encodeURIComponent(s[0]+' '+s[1]+' song');
+  const sp=s=>'https://open.spotify.com/search/'+encodeURIComponent(s[0]+' '+s[1]);
+  wrap.append(h('div',{class:'card stage'},
+    h('span',{class:'pill'},`Song ${g.n} of ${SONGS.length}`),
+    cur?h('div',{class:'stack center'},h('div',{class:'huge pop'},cur[0]),h('div',{class:'big muted'},'🎬 '+cur[1]),
+      h('div',{class:'row',style:'justify-content:center'},h('a',{class:'btn sm pink',href:yt(cur),target:'_blank',style:'text-decoration:none'},'▶ YouTube'),h('a',{class:'btn sm teal',href:sp(cur),target:'_blank',style:'text-decoration:none'},'▶ Spotify')))
+      :h('div',{class:'big muted'},'Ready when you are'),
+    h('div',{class:'row',style:'justify-content:center'},
+      btn(g.n?'Next song 🎵':'Call first song 🎵','big',()=>{if(g.n<SONGS.length){g.n++;store.set('tambola',g);ding();render();}}),
+      g.n?btn('↩︎ Undo','ghost',()=>{g.n--;store.set('tambola',g);render();}):null)));
+  // verify
+  const nameIn=h('input',{class:'field',placeholder:"Player's name exactly as they typed it"});
+  const out=h('div',{});
+  const verify=()=>{
+    out.innerHTML='';const nm=nameIn.value;if(!nm.trim())return;
+    const tk=ticketFor(nm),cs=new Set(called),marks=tk.map(i=>cs.has(i));
+    out.append(h('div',{class:'ticket',style:'margin-top:10px'},tk.map((i,k)=>h('div',{class:'cell'+(marks[k]?' called':'')},SONGS[i][0],h('small',{},SONGS[i][1])))));
+    out.append(h('div',{class:'row',style:'margin-top:10px'},PRIZES.map(([k,label,,fn])=>h('span',{class:'pill',style:fn(marks)?'background:var(--teal);color:var(--ink)':''},(fn(marks)?'✅ ':'❌ ')+label))));
+  };
+  nameIn.addEventListener('keydown',e=>{if(e.key==='Enter')verify();});
+  wrap.append(h('div',{class:'card'},h('h2',{},'🔍 Verify a claim'),h('div',{class:'spacer'}),h('div',{class:'row'},h('div',{class:'grow'},nameIn),btn('Check','teal',verify)),out));
+  // prizes
+  wrap.append(h('div',{class:'card'},h('h2',{},'🏅 Prize winners'),h('div',{class:'spacer'}),
+    h('div',{class:'stack'},PRIZES.map(([k,label,desc])=>h('div',{class:'row'},h('div',{class:'grow'},h('b',{},label),' ',h('span',{class:'muted'},desc)),
+      g.winners[k]?h('span',{class:'pill',style:'background:var(--gold);color:var(--ink);font-size:16px'},'🏆 '+g.winners[k]):
+      btn('Set winner','sm',()=>{const w=prompt(label+' winner?');if(w){g.winners[k]=w;store.set('tambola',g);confetti(50);render();}}))))));
+  wrap.append(h('div',{class:'card'},h('h3',{},'Called so far'),h('div',{class:'spacer'}),
+    h('div',{class:'calledlist'},called.slice().reverse().map(i=>h('span',{},SONGS[i][0]))),
+    h('div',{class:'spacer'}),btn('New Tambola game','red sm',()=>{if(confirm('Start a fresh game? Called songs & winners reset.')){newGame();render();}})));
+  return wrap;
+}
+
+/* mafia */
+function buildRoles(n){const d=n<=6?1:n<=9?2:3;const r=[];for(let i=0;i<d;i++)r.push('dacoit');r.push('thakur','basanti');while(r.length<n)r.push('villager');return r;}
+function rolesFor(code){const m=String(code||'').toUpperCase().replace(/\s/g,'').match(/^([A-Z]{3})(\d{1,2})$/);if(!m)return null;const n=+m[2];if(n<5||n>16)return null;return shuffle(buildRoles(n),mulberry32(hashStr('mafia|'+m[1]+n)));}
+function hostMafia(){
+  let st=store.get('mafia',null);
+  const wrap=h('div',{class:'stack'});
+  const make=(n)=>{const L='ABCDEFGHJKLMNPRSTUVWXYZ';let c='';for(let i=0;i<3;i++)c+=L[Math.floor(Math.random()*L.length)];st={code:c+n,dead:[],show:false};store.set('mafia',st);render();};
+  wrap.append(rules('How to play (read aloud)',[
+    'Sit in a circle and number yourselves 1, 2, 3… (host does not play).',
+    'Open the link → Ramgarh Mafia → type the game code and YOUR seat number. Press and hold to peek at your role. Tell no one!',
+    'NIGHT: everyone closes eyes. Dacoits open eyes, silently agree on a victim. Basanti wakes and points at someone to protect. Thakur wakes and points at a suspect — host nods yes/no.',
+    'DAY: host reveals who was attacked (unless Basanti saved them). Everyone argues, accuses, and votes one person out.',
+    'Villagers win when all dacoits are out. Dacoits win when they equal the villagers.']));
+  if(!st){
+    wrap.append(h('div',{class:'card stage'},h('div',{style:'font-size:56px'},'🏜️🔫'),h('h2',{},'How many players? (not counting you)'),
+      h('div',{class:'row',style:'justify-content:center'},[6,7,8,9,10,11,12].map(n=>btn(String(n),n===9?'pink':'',()=>make(n))))));
+    return wrap;
+  }
+  const roles=rolesFor(st.code);const n=roles.length;
+  wrap.append(h('div',{class:'card stage'},h('div',{class:'muted'},'Game code — tell everyone'),h('div',{class:'huge',style:'letter-spacing:6px'},st.code),
+    h('div',{class:'muted'},`${n} players · ${roles.filter(r=>r==='dacoit').length} dacoits · 1 Thakur · 1 Basanti`)));
+  const script=[['🌙 Night','“Ramgarh, close your eyes…”'],['🔫 Dacoits','“Dacoits, open your eyes. Silently choose a victim… Close your eyes.”'],['🛡️ Basanti','“Basanti, open your eyes. Who do you protect tonight?… Close.”'],['🕵️ Thakur','“Thakur, open your eyes. Point at a suspect.” (nod yes/no) “Close.”'],['☀️ Day','“Ramgarh, wake up! Last night…” → reveal → discuss → vote one out.']];
+  wrap.append(h('div',{class:'card'},h('h2',{},'Narrator script'),h('div',{class:'spacer'}),h('div',{class:'stack'},script.map(([a,b])=>h('div',{},h('b',{},a+'  '),h('span',{class:'muted'},b))))));
+  const tbl=h('table',{class:'roles-table'},roles.map((r,i)=>h('tr',{class:st.dead.includes(i)?'dead':''},
+    h('td',{},'Seat '+(i+1)),h('td',{},st.show?ROLES[r].em+' '+ROLES[r].name:'••••••'),
+    h('td',{style:'text-align:right'},btn(st.dead.includes(i)?'Revive':'Out','sm ghost',()=>{const k=st.dead.indexOf(i);k>=0?st.dead.splice(k,1):st.dead.push(i);store.set('mafia',st);render();})))));
+  const aliveD=roles.filter((r,i)=>r==='dacoit'&&!st.dead.includes(i)).length,aliveV=roles.filter((r,i)=>r!=='dacoit'&&!st.dead.includes(i)).length;
+  wrap.append(h('div',{class:'card'},h('div',{class:'row'},h('h2',{class:'grow'},'Seats'),btn(st.show?'🙈 Hide roles':'👁️ Show roles (host only)','sm',()=>{st.show=!st.show;store.set('mafia',st);render();})),h('div',{class:'spacer'}),tbl,
+    h('div',{class:'spacer'}),
+    aliveD===0?h('div',{class:'big ans'},'🌾 Villagers win!'):aliveD>=aliveV?h('div',{class:'big',style:'color:var(--red)'},'🔫 Dacoits win!'):h('div',{class:'muted'},`Alive: ${aliveD+aliveV} (${st.show?aliveD+' dacoits':'hidden'})`)));
+  wrap.append(btn('New Mafia game','red sm',()=>{if(confirm('New game with a new code?')){store.set('mafia',null);render();}}));
+  return wrap;
+}
+
+/* couples */
+function hostCouples(){
+  const qs=HOST.couples;const st=store.get('couples',{i:0,shown:false});const names=S.teams();
+  const wrap=h('div',{class:'stack'});
+  wrap.append(rules('How to play (read aloud)',['Each couple: one partner per team. Partners face each other.','Host reads the question. On “1-2-3!” both answer at the SAME time (or point, for “who” questions).','Match = +1 to BOTH teams. No match = the room decides who’s wrong and the other team gets the point 😄']));
+  const card=h('div',{class:'card stage'},h('span',{class:'pill'},`Question ${st.i+1} / ${qs.length}`));
+  if(!st.shown)card.append(h('div',{class:'hidden-q',onclick:()=>{st.shown=true;store.set('couples',st);render();}},h('div',{class:'big'},'💑 Tap to show question')));
+  else card.append(h('div',{class:'huge pop',style:'font-size:clamp(28px,5.5vw,56px)'},qs[st.i]),h('div',{class:'big ans'},'1 · 2 · 3!'));
+  wrap.append(card);
+  wrap.append(h('div',{class:'row',style:'justify-content:center'},
+    btn('💞 Matched! +1 both','teal',()=>{S.add(0,1,'couples');S.add(1,1,'couples');confetti(30);}),
+    btn('+1 '+names[0],'t0',()=>S.add(0,1,'couples')),btn('+1 '+names[1],'t1',()=>S.add(1,1,'couples'))));
+  wrap.append(h('div',{class:'row',style:'justify-content:space-between'},
+    btn('← Prev','ghost',()=>{st.i=Math.max(0,st.i-1);st.shown=false;store.set('couples',st);render();}),
+    btn('Next →','',()=>{st.i=Math.min(qs.length-1,st.i+1);st.shown=false;store.set('couples',st);render();})));
+  return wrap;
+}
+
+/* phone games scoring hub */
+function hostPhones(){
+  const names=S.teams();
+  const wrap=h('div',{class:'stack'});
+  wrap.append(h('div',{class:'card'},h('h2',{},'Phone games'),h('p',{class:'muted'},"These run on players' phones. When a turn ends, the phone shows the points — add them here."),
+    h('p',{class:'muted',style:'margin:0'},'Tip: alternate teams each turn. Same number of turns per team per game.')));
+  const games=[['headsup','🤔 Heads Up','Phone on forehead, team shouts clues. 60s. Points = correct guesses.',[1,2,3,5]],
+    ['charades','🎭 Charades','Actor picks Easy 1 / Medium 2 / Hard 3. 90s.',[1,2,3]],
+    ['pictionary','✏️ Pictionary','Draw the movie on the phone. 60s. 2 points if guessed.',[2]],
+    ['taboo','🚫 Taboo','Describe the movie without the 4 banned words. 60s. Points = net score.',[1,2,3,5]]];
+  for(const [k,title,desc,pts] of games){
+    const custom=(t)=>{const p=prompt(`Points for ${names[t]} (${title})`);if(p&&!isNaN(+p))S.add(t,+p,k);};
+    wrap.append(h('div',{class:'card'},h('h3',{},title),h('p',{class:'muted',style:'margin:4px 0 10px'},desc),
+      [0,1].map(t=>h('div',{class:'row',style:'margin-bottom:8px'},h('b',{style:'min-width:120px'},names[t]),pts.map(p=>btn('+'+p,'sm t'+t,()=>S.add(t,p,k))),btn('other…','sm ghost',()=>custom(t))))));
+  }
+  return wrap;
+}
+
+/* ---------------- player (phones) ---------------- */
+function playView(view){
+  const views={tambola:playTambola,headsup:playHeadsUp,charades:playCharades,pictionary:playPictionary,taboo:playTaboo,mafia:playMafia};
+  if(views[view]){app.append(topbar(btn('← Games','ghost sm',()=>go('/play'))));return app.append(views[view]());}
+  app.append(topbar());
+  app.append(h('h1',{class:'big',style:'margin:6px 0 4px'},'Pick a game'),h('p',{class:'muted',style:'margin:0 0 14px'},'The host will tell you which one is up.'));
+  const tiles=[['tambola','🎶','Song Tambola','Your ticket','#ffb703'],['headsup','🤔','Heads Up','Forehead guessing','#ff4d8d'],['charades','🎭','Charades','Act it out','#06d6a0'],['pictionary','✏️','Pictionary','Draw it','#4cc9f0'],['taboo','🚫','Taboo','Don’t say it','#fb8500'],['mafia','🔫','Ramgarh Mafia','Secret role','#9b5de5']];
+  app.append(h('div',{class:'tiles'},tiles.map(([k,em,t,s,c])=>h('button',{class:'tile',style:`background:${c}`,onclick:()=>go('/play/'+k)},h('div',{class:'em'},em),h('div',{},h('b',{},t),h('small',{},s))))));
+}
+
+function playTambola(){
+  const wrap=h('div',{class:'stack'});
+  const name=store.get('tname','');
+  if(!name){
+    const inp=h('input',{class:'field',placeholder:'Your name',maxlength:30});
+    const go2=()=>{if(inp.value.trim()){store.set('tname',inp.value.trim());render();}};
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter')go2();});
+    wrap.append(h('div',{class:'card stage'},h('div',{style:'font-size:56px'},'🎟️'),h('h2',{},'Get your Tambola ticket'),h('p',{class:'muted',style:'margin:0'},'Use the name you’ll shout when you win — the host checks tickets by name.'),inp,btn('Get my ticket','pink big block',go2)));
+    return wrap;
+  }
+  const tk=ticketFor(name);const key='tmarks_'+norm(name);const marks=store.get(key,Array(12).fill(false));
+  const status=h('div',{class:'row',style:'justify-content:center'});
+  const paint=()=>{status.innerHTML='';PRIZES.forEach(([k,l,,fn])=>{if(fn(marks))status.append(h('span',{class:'pill',style:'background:var(--teal);color:var(--ink)'},'🎉 '+l+'?'));});};
+  const grid=h('div',{class:'ticket'},tk.map((i,k)=>{const c=h('button',{class:'cell'+(marks[k]?' on':''),onclick:()=>{marks[k]=!marks[k];c.classList.toggle('on',marks[k]);store.set(key,marks);if(marks[k])beep(900,.06);paint();}},SONGS[i][0],h('small',{},SONGS[i][1]));return c;}));
+  paint();
+  wrap.append(h('div',{class:'row'},h('h2',{class:'grow'},'🎟️ '+name+"'s ticket")),grid,status,
+    h('div',{class:'card'},h('b',{},'Prizes'),h('ul',{class:'muted',style:'margin:6px 0 0;padding-left:20px'},PRIZES.map(([,l,d])=>h('li',{},l+' — '+d)))),
+    h('p',{class:'muted center',style:'font-size:14px'},'Shout the moment you win! Not you? ',h('a',{href:'#',style:'color:var(--muted)',onclick:e=>{e.preventDefault();if(confirm('Switch name? You will get a different ticket.')){store.set('tname','');render();}}},'Change name')));
+  return wrap;
+}
+
+function deckDraw(key,items){let used=store.get('used_'+key,[]);let pool=items.filter(x=>!used.includes(JSON.stringify(x)));if(!pool.length){used=[];pool=items.slice();}const pick=pool[Math.floor(Math.random()*pool.length)];used.push(JSON.stringify(pick));store.set('used_'+key,used);return pick;}
+function fullscreen(){const fs=h('div',{class:'fs'});document.body.append(fs);onCleanup(()=>fs.remove());return fs;}
+
+function roundGame({key,title,secs,deck,renderCard,how,netLabel,penalty}){
+  const wrap=h('div',{class:'stack'});
+  wrap.append(h('div',{class:'card stage'},h('div',{style:'font-size:56px'},title.split(' ')[0]),h('h2',{},title.slice(title.indexOf(' ')+1)),
+    h('ol',{class:'muted',style:'text-align:left;margin:0;padding-left:20px'},how.map(x=>h('li',{},x))),
+    btn(`Start ${secs}s round`,'pink big block',()=>start())));
+  function start(){
+    const fs=fullscreen();let score=0,results=[];let cur=deckDraw(key,deck);
+    const cardEl=h('div',{class:'stage',style:'flex:1;padding:16px'});
+    const scoreEl=h('span',{class:'pill',style:'font-size:18px'},'0');
+    const t=makeTimer(secs,{big:false,onEnd:end});
+    const paintCard=()=>{cardEl.innerHTML='';cardEl.append(renderCard(cur));};
+    const next=(ok)=>{results.push([cur,ok]);if(ok===true){score++;ding();}else if(ok==='buzz'){score-=penalty||0;buzzer();}else beep(300,.1);scoreEl.textContent=score;cur=deckDraw(key,deck);paintCard();};
+    fs.append(h('div',{class:'bar'},btn('✕','ghost sm',()=>{t.stop();fs.remove();}),t.el,scoreEl));
+    fs.append(cardEl);
+    const bottom=h('div',{class:'split',style:'flex:none;height:30vh'},
+      h('button',{style:'background:var(--red)',onclick:()=>next(false)},'Pass'),
+      h('button',{style:'background:var(--teal);color:var(--ink)',onclick:()=>next(true)},'Correct ✓'));
+    fs.append(bottom);
+    if(penalty)fs.append(h('button',{class:'btn block',style:'border-radius:0;--c:#7b1e3a;--tc:#fff;box-shadow:none',onclick:()=>next('buzz')},`🚨 BUZZ — banned word said (−${penalty})`));
+    paintCard();t.start();
+    function end(){
+      fs.innerHTML='';
+      fs.append(h('div',{class:'stage',style:'flex:1;padding:20px;overflow:auto'},
+        h('div',{style:'font-size:60px'},'⏰'),h('div',{class:'huge pop'},score+' points'),h('div',{class:'muted big'},'Tell the host: +'+Math.max(0,score)+' for your team'),
+        h('div',{class:'calledlist',style:'justify-content:center'},results.map(([c,ok])=>h('span',{style:ok===true?'background:var(--teal);color:var(--ink)':ok==='buzz'?'background:var(--red)':''},(ok===true?'✓ ':ok==='buzz'?'🚨 ':'✗ ')+(Array.isArray(c)?c[0]:c)))),
+        btn('Done','big',()=>fs.remove())));
+      if(score>0)confetti(30);
+    }
+  }
+  return wrap;
+}
+function playHeadsUp(){
+  return roundGame({key:'headsup',title:'🤔 Heads Up',secs:60,deck:HEADSUP,
+    how:['Hold the phone on your forehead, screen facing your team.','Your team shouts clues — acting, hints, anything but the name.','A teammate taps Correct or Pass. Get as many as you can in 60 seconds.'],
+    renderCard:w=>h('div',{class:'huge pop',style:'font-size:clamp(40px,12vw,96px)'},w)});
+}
+function playTaboo(){
+  return roundGame({key:'taboo',title:'🚫 Taboo',secs:60,deck:TABOO,penalty:1,
+    how:['Describe the movie to your team WITHOUT saying it or any of the 4 banned words.','No acting, no humming, no “sounds like”.','Someone from the OTHER team watches your screen and hits BUZZ if you slip (−1).'],
+    renderCard:([m,ban])=>h('div',{class:'stack center pop'},h('div',{class:'huge'},m),h('div',{class:'muted'},'Don’t say:'),
+      h('div',{class:'stack',style:'gap:6px'},ban.map(b=>h('div',{class:'big',style:'color:var(--red)'},'✗ '+b))))});
+}
+function playCharades(){
+  const wrap=h('div',{class:'stack'});
+  wrap.append(h('div',{class:'card'},h('h2',{},'🎭 Charades'),h('p',{class:'muted',style:'margin:6px 0 0'},'Pick a level. Only YOU look at the screen. Act it out — no talking, no lip-syncing. 90 seconds.')));
+  wrap.append(h('div',{class:'stack'},Object.entries(CHARADES).map(([k,L])=>h('button',{class:'tile',style:`min-height:90px;flex-direction:row;align-items:center;background:var(--${L.color==='gold'?'gold':L.color})`,onclick:()=>act(k)},
+    h('div',{},h('b',{},L.label),h('small',{},L.label==='Easy'?'Short titles':L.label==='Medium'?'Classics':'Long titles — good luck')),h('div',{class:'em',style:'font-size:34px;font-weight:800'},'+'+L.pts)))));
+  function act(k){
+    const L=CHARADES[k];const movie=deckDraw('ch_'+k,L.items);const fs=fullscreen();
+    const t=makeTimer(90,{onEnd:()=>done(false)});
+    const word=h('div',{class:'huge pop'},movie);
+    const peek=h('div',{class:'muted'},'');
+    const body=h('div',{class:'stage',style:'flex:1;padding:20px'},h('span',{class:'pill'},L.label+' · +'+L.pts),word,h('div',{class:'muted'},'Memorise it, then start the clock'),
+      btn('▶ Start acting','pink big',()=>{word.style.filter='blur(18px)';body.querySelector('.btn').remove();body.children[2].textContent='Tap the blur to peek';word.onclick=()=>{word.style.filter='none';setTimeout(()=>word.style.filter='blur(18px)',1500);};body.append(t.el,h('div',{class:'row',style:'justify-content:center'},btn('✓ Guessed!','teal big',()=>done(true)),btn('Give up','ghost',()=>done(false))));t.start();}));
+    fs.append(h('div',{class:'bar'},btn('✕','ghost sm',()=>fs.remove())),body);
+    function done(ok){t.stop();fs.innerHTML='';fs.append(h('div',{class:'stage',style:'flex:1;padding:20px'},h('div',{style:'font-size:70px'},ok?'🎉':'😅'),h('div',{class:'big'},movie),
+      h('div',{class:'huge pop'},ok?'+'+L.pts+' points':'No points'),ok?h('div',{class:'muted big'},'Tell the host!'):null,btn('Done','big',()=>fs.remove())));if(ok){confetti(30);ding();}}
+  }
+  return wrap;
+}
+function playPictionary(){
+  const wrap=h('div',{class:'stack'});
+  wrap.append(h('div',{class:'card stage'},h('div',{style:'font-size:56px'},'✏️'),h('h2',{},'Filmy Pictionary'),
+    h('ol',{class:'muted',style:'text-align:left;margin:0;padding-left:20px'},h('li',{},'Only you peek at the movie.'),h('li',{},'Draw it on the phone and hold it up for your team. No letters or numbers!'),h('li',{},'60 seconds. Guessed = 2 points.')),
+    btn('Get a movie','pink big block',start)));
+  function start(){
+    const movie=deckDraw('pict',PICTIONARY);const fs=fullscreen();
+    const t=makeTimer(60,{big:false,onEnd:()=>done(false)});
+    const canvas=h('canvas',{class:'pad'});
+    let color='#1b0a33',size=6;
+    const sw=['#1b0a33','#ef476f','#fb8500','#06d6a0','#4cc9f0'].map(c=>{const s=h('button',{class:'swatch'+(c===color?' on':''),style:`background:${c}`,onclick:()=>{color=c;size=6;fs.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on'));s.classList.add('on');}});return s;});
+    const eraser=btn('🧽','ghost sm',()=>{color='#ffffff';size=26;});
+    const reveal=h('div',{class:'stage',style:'position:absolute;inset:0;background:var(--bg);z-index:5;padding:20px'},
+      h('div',{class:'muted'},'Your movie:'),h('div',{class:'huge pop'},movie),btn('▶ Start drawing','pink big',()=>{reveal.remove();t.start();}));
+    const holder=h('div',{style:'flex:1;position:relative;display:flex'},canvas,reveal);
+    fs.append(h('div',{class:'bar'},btn('✕','ghost sm',()=>fs.remove()),t.el,btn('👁️','ghost sm',()=>toast(movie))),holder,
+      h('div',{class:'bar'},h('div',{class:'row'},sw,eraser,btn('Clear','ghost sm',()=>ctx.clearRect(0,0,canvas.width,canvas.height))),btn('✓ Guessed!','teal',()=>done(true))));
+    const ctx=canvas.getContext('2d');
+    const fit=()=>{const r=canvas.getBoundingClientRect(),d=window.devicePixelRatio||1;canvas.width=r.width*d;canvas.height=r.height*d;ctx.scale(d,d);ctx.lineCap='round';ctx.lineJoin='round';};
+    requestAnimationFrame(fit);
+    let drawing=false,last=null;
+    const pos=e=>{const r=canvas.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];};
+    canvas.addEventListener('pointerdown',e=>{drawing=true;last=pos(e);canvas.setPointerCapture(e.pointerId);});
+    canvas.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);ctx.strokeStyle=color;ctx.lineWidth=size;ctx.beginPath();ctx.moveTo(...last);ctx.lineTo(...p);ctx.stroke();last=p;});
+    ['pointerup','pointercancel'].forEach(ev=>canvas.addEventListener(ev,()=>drawing=false));
+    function done(ok){t.stop();fs.innerHTML='';fs.append(h('div',{class:'stage',style:'flex:1;padding:20px'},h('div',{style:'font-size:70px'},ok?'🎉':'⏰'),h('div',{class:'big'},movie),h('div',{class:'huge pop'},ok?'+2 points':'Time up!'),ok?h('div',{class:'muted big'},'Tell the host!'):null,btn('Done','big',()=>fs.remove())));if(ok){confetti(30);ding();}}
+  }
+  return wrap;
+}
+function playMafia(){
+  const wrap=h('div',{class:'stack'});
+  const saved=store.get('mafiaMe',{code:'',seat:''});
+  const code=h('input',{class:'field',placeholder:'Game code (e.g. KRT9)',value:saved.code,autocapitalize:'characters',style:'text-transform:uppercase;letter-spacing:3px'});
+  const seat=h('input',{class:'field',placeholder:'Your seat number',type:'number',inputmode:'numeric',value:saved.seat});
+  const out=h('div',{});
+  const show=()=>{
+    out.innerHTML='';const roles=rolesFor(code.value);const s=parseInt(seat.value,10);
+    if(!roles){out.append(h('p',{style:'color:var(--red)'},'Check the code with the host.'));return;}
+    if(!(s>=1&&s<=roles.length)){out.append(h('p',{style:'color:var(--red)'},`Seat must be 1–${roles.length}.`));return;}
+    store.set('mafiaMe',{code:code.value.toUpperCase().trim(),seat:String(s)});
+    const R=ROLES[roles[s-1]];
+    const front=h('div',{class:'stack center'},h('div',{class:'em'},'🃏'),h('div',{class:'big'},'Press & hold to see your role'),h('div',{class:'muted'},'Shield the screen!'));
+    const back=h('div',{class:'stack center',style:'display:none'},h('div',{class:'em'},R.em),h('div',{class:'big'},R.name),h('p',{style:'margin:0;font-weight:600'},R.desc));
+    const card=h('div',{class:'rolecard',style:'background:linear-gradient(160deg,#40197a,#1d0b3a);border:2px solid var(--line)'},front,back);
+    const on=e=>{e.preventDefault();front.style.display='none';back.style.display='';card.style.background=R.bg;},off=()=>{front.style.display='';back.style.display='none';card.style.background='linear-gradient(160deg,#40197a,#1d0b3a)';};
+    card.addEventListener('pointerdown',on);['pointerup','pointerleave','pointercancel'].forEach(ev=>card.addEventListener(ev,off));
+    card.addEventListener('contextmenu',e=>e.preventDefault());
+    out.append(h('div',{class:'muted center',style:'margin:6px 0'},`Seat ${s}`),card);
+  };
+  wrap.append(h('div',{class:'card stack'},h('h2',{},'🔫 Ramgarh Mafia'),h('p',{class:'muted',style:'margin:0'},'Get the code from the host. Seat numbers go around the circle.'),code,seat,btn('Show my role card','violet big block',show)),out);
+  if(saved.code&&saved.seat)setTimeout(show,0);
+  return wrap;
+}
+
+render();
+</script>
+</body>
+</html>
