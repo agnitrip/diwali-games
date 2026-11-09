@@ -255,12 +255,17 @@ const S = {
 let stripEl=null;
 function scoreStrip(){
   const names=S.teams();
-  stripEl=h('div',{class:'strip'},[0,1].map(i=>h('div',{class:'team t'+i,id:'team'+i},
-    h('span',{class:'nm',title:'Tap to rename',onclick:()=>{const n=prompt('Team name',names[i]);if(n){const t=S.teams();t[i]=n.trim();store.set('teams',t);render();}}},names[i]),
+  const mini='background:rgba(0,0,0,.18);border:0;border-radius:10px;color:inherit;font:inherit;font-weight:800;font-size:14px;padding:4px 8px;cursor:pointer';
+  stripEl=h('div',{class:'strip'},[0,1].map(i=>h('div',{class:'team t'+i,id:'team'+i,style:'cursor:pointer',title:'Tap to give +1',onclick:()=>{S.add(i,1,currentGame());if(/\/host\/?(score)?$/.test(location.hash))render();}},
+    h('span',{class:'nm'},names[i]),
+    h('button',{style:mini,title:'Rename',onclick:e=>{e.stopPropagation();const n=prompt('Team name',names[i]);if(n){const t=S.teams();t[i]=n.trim();store.set('teams',t);render();}}},'✏️'),
+    h('button',{style:mini,title:'Take a point away',onclick:e=>{e.stopPropagation();S.add(i,-1,currentGame());}},'−1'),
     h('span',{class:'sc'},'0'))));
   setTimeout(()=>paintStrip(),0);
   return stripEl;
 }
+// which game a tap on the score bar counts toward
+function currentGame(){const v=location.hash.split('/')[2]||'';if(v==='act')return store.get('act',{}).mode||'charades';if(v==='phones')return store.get('words',{}).mode||'headsup';return ['quiz','antakshari','couples'].includes(v)?v:'other';}
 function paintStrip(bumped){
   if(!stripEl||!stripEl.isConnected)return;
   const t=S.totals();
@@ -445,7 +450,7 @@ function hostAct(){
   const pts=isCh?CHARADES[st.level].pts:2,secs=isCh?90:60;
   const newCard=()=>{st.card=isCh?deckDraw('hch_'+st.level,CHARADES[st.level].items):deckDraw('hpict',PICTIONARY);save();};
   if(!st.card)newCard();
-  const nextTurn=()=>{st.turn=1-st.turn;st.card=null;save();render();};
+  const nextCard=()=>{st.card=null;save();render();};
   const wrap=h('div',{class:'stack'});
   wrap.append(h('div',{class:'row'},
     h('button',{class:'tab'+(isCh?' on':''),onclick:()=>{st.mode='charades';st.card=null;save();render();}},'🎭 Dumb Charades'),
@@ -453,7 +458,6 @@ function hostAct(){
   wrap.append(isCh
     ?rulesBar('charades')
     :rulesBar('pictionary'));
-  wrap.append(h('div',{class:'team t'+st.turn,style:'justify-content:center;font-size:24px;font-weight:800'},(isCh?'🎭 ':'✏️ ')+names[st.turn]+"'s turn"));
   if(isCh)wrap.append(h('div',{class:'row',style:'justify-content:center'},Object.entries(CHARADES).map(([k,L])=>
     h('button',{class:'tab'+(k===st.level?' on':''),onclick:()=>{st.level=k;st.card=null;save();render();}},`${L.label} · +${L.pts}`))));
   // secret card: press & hold so the TV/room can't see it
@@ -471,8 +475,8 @@ function hostAct(){
       isCh?null:btn('🖌️ Open drawing pad','violet',()=>openPad(secs,st.card)),
       btn('🔄 New card','ghost',()=>{newCard();render();})),
     h('div',{class:'row',style:'justify-content:center'},
-      btn(`✓ Guessed! +${pts} ${names[st.turn]}`,'big t'+st.turn,()=>{t.stop();S.add(st.turn,pts,st.mode);confetti(25);setTimeout(nextTurn,700);}),
-      btn('✗ Missed — next team','red',()=>{t.stop();nextTurn();}))));
+      [0,1].map(i=>btn(`✓ +${pts} ${names[i]}`,'big t'+i,()=>{t.stop();S.add(i,pts,st.mode);confetti(25);setTimeout(nextCard,700);})),
+      btn('✗ Missed — next card','red',()=>{t.stop();nextCard();}))));
   return wrap;
 }
 function openPad(secs,word){
@@ -530,7 +534,6 @@ function hostAntakshari(){
   const st=store.get('ant',{turn:0,used:[]});
   const wrap=h('div',{class:'stack'});
   wrap.append(rulesBar('antakshari'));
-  const turnEl=h('div',{class:'team t'+st.turn,style:'justify-content:center;font-size:24px;font-weight:800'},'🎤 '+names[st.turn]+"'s turn");
   const t=makeTimer(10,{onEnd:()=>toast('Time up! −1')});
   const catEl=h('div',{class:'big',style:'min-height:1.2em'},st.cat||'Spin for a twist!');
   let spinning=false;
@@ -545,11 +548,13 @@ function hostAntakshari(){
   wrap.append(h('div',{class:'card stage'},
     h('div',{style:'font-size:56px'},'🎡'),catEl,
     h('div',{class:'row',style:'justify-content:center'},btn('Spin the wheel','violet big',spin),btn('Clear twist','ghost',()=>{st.cat='';store.set('ant',st);catEl.textContent='Normal round — no twist';}))));
-  wrap.append(h('div',{class:'card stage',style:'min-height:0'},turnEl,t.el,
+  wrap.append(h('div',{class:'card stage',style:'min-height:0'},h('div',{class:'muted'},'10-second clock to start singing'),t.el,
     h('div',{class:'row',style:'justify-content:center'},
       btn('▶ Start 10s','teal',()=>{t.reset();t.start();}),
-      btn('✓ Sang it! Next team','',()=>{t.reset();st.turn=1-st.turn;store.set('ant',st);render();}),
-      btn('✗ Stuck (−1)','red',()=>{t.reset();S.add(st.turn,-1,'antakshari');st.turn=1-st.turn;store.set('ant',st);setTimeout(render,500);}))));
+      btn('✓ Sang it — reset clock','',()=>{t.reset();})),
+    h('div',{class:'row',style:'justify-content:center'},
+      [0,1].map(i=>btn(`✗ ${names[i]} stuck (−1)`,'red',()=>{t.reset();S.add(i,-1,'antakshari');})),
+      [0,1].map(i=>btn(`+1 ${names[i]}`,'t'+i,()=>S.add(i,1,'antakshari'))))));
   return wrap;
 }
 
@@ -678,14 +683,12 @@ function hostPhones(){
     h('button',{class:'tab'+(isHU?' on':''),onclick:()=>{st.mode='headsup';save();render();}},'🤔 Heads Up'),
     h('button',{class:'tab'+(!isHU?' on':''),onclick:()=>{st.mode='taboo';save();render();}},'🚫 Taboo')));
   wrap.append(rulesBar(st.mode));
-  wrap.append(h('div',{class:'team t'+st.turn,style:'justify-content:center;font-size:24px;font-weight:800'},(isHU?'🤔 ':'🚫 ')+names[st.turn]+"'s turn"));
   wrap.append(h('div',{class:'card stage',style:'min-height:0'},
     h('p',{class:'muted',style:'margin:0;font-size:18px'},isHU
       ?'On the TV: the guesser stands with their back to the screen, and their team reads it and gives clues. On a phone: hold this device on the guesser’s forehead.'
       :'The clue-giver holds this device (or stands facing the screen). One player from the other team watches and hits BUZZ.'),
     btn('▶ Start 60s round','pink big',()=>runRound({key:'h'+st.mode,secs:60,deck:isHU?HEADSUP:TABOO,renderCard:isHU?headsUpCard:tabooCard,penalty:isHU?0:1,
-      award:{label:names[st.turn],add:(p)=>{if(p)S.add(st.turn,p,st.mode);st.turn=1-st.turn;save();setTimeout(render,600);}}})),
-    btn('Skip to other team','ghost sm',()=>{st.turn=1-st.turn;save();render();})));
+      award:{teams:names,add:(i,p)=>{if(p)S.add(i,p,st.mode);}}}))));
   // fallback: rounds played on guests' own phones
   const games=[['headsup','🤔 Heads Up',[1,2,3,5]],['taboo','🚫 Taboo',[1,2,3,5]],['charades','🎭 Charades',[1,2,3]],['pictionary','✏️ Pictionary',[2]]];
   wrap.append(h('div',{class:'card'},h('h3',{},'Played on a guest phone? Add the points here'),h('div',{class:'spacer'}),
@@ -746,7 +749,7 @@ function roundGame({key,title,secs,deck,renderCard,how,netLabel,penalty}){
     btn(`Start ${secs}s round`,'pink big block',()=>runRound({key,secs,deck,renderCard,penalty}))));
   return wrap;
 }
-// award: optional {label, add(score)} — host rounds score straight onto the board
+// award: optional {teams, add(teamIndex, score)} — host rounds score straight onto the board
 function runRound({key,secs,deck,renderCard,penalty,award}){
     const fs=fullscreen();let score=0,results=[];let cur=deckDraw(key,deck);
     const cardEl=h('div',{class:'stage',style:'flex:1;padding:16px'});
@@ -767,7 +770,7 @@ function runRound({key,secs,deck,renderCard,penalty,award}){
       fs.append(h('div',{class:'stage',style:'flex:1;padding:20px;overflow:auto'},
         h('div',{style:'font-size:60px'},'⏰'),h('div',{class:'huge pop'},score+' points'),award?null:h('div',{class:'muted big'},'Tell the host: +'+Math.max(0,score)+' for your team'),
         h('div',{class:'calledlist',style:'justify-content:center'},results.map(([c,ok])=>h('span',{style:ok===true?'background:var(--teal);color:var(--ink)':ok==='buzz'?'background:var(--red)':''},(ok===true?'✓ ':ok==='buzz'?'🚨 ':'✗ ')+(Array.isArray(c)?c[0]:c)))),
-        award?h('div',{class:'row',style:'justify-content:center'},btn(`Add ${Math.max(0,score)} to ${award.label} & next team`,'big',()=>{fs.remove();award.add(Math.max(0,score));}),btn("Don't add",'ghost',()=>fs.remove()))
+        award?h('div',{class:'row',style:'justify-content:center'},award.teams.map((nm,i)=>btn(`+${Math.max(0,score)} ${nm}`,'big t'+i,()=>{fs.remove();award.add(i,Math.max(0,score));})),btn("Don't add",'ghost',()=>fs.remove()))
           :btn('Done','big',()=>fs.remove())));
       if(score>0)confetti(30);
     }
