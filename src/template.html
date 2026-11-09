@@ -382,7 +382,7 @@ function pinScreen(){
 }
 
 /* ---------------- host ---------------- */
-const HOST_TABS=[['score','🏆 Scoreboard'],['act','🎭 Charades & Pictionary'],['quiz','🎬 Quiz'],['antakshari','🎤 Antakshari'],['tambola','🎶 Tambola'],['mafia','🔫 Mafia'],['couples','💑 Couples'],['phones','📱 Phone games']];
+const HOST_TABS=[['score','🏆 Scoreboard'],['act','🎭 Charades & Pictionary'],['quiz','🎬 Quiz'],['antakshari','🎤 Antakshari'],['tambola','🎶 Tambola'],['mafia','🔫 Mafia'],['couples','💑 Couples'],['phones','🤔 Heads Up & Taboo']];
 function hostView(view){
   app.append(topbar(btn('Lock','ghost sm',()=>{try{sessionStorage.removeItem('dg_pin');localStorage.removeItem('dg_pin');}catch(e){}HOST=null;go('/');})));
   app.append(scoreStrip());
@@ -408,7 +408,11 @@ function hostScore(){
         btn('+1 / −1 manual','ghost sm',()=>{const t=prompt(`Which team? 1 = ${names[0]}, 2 = ${names[1]}`);const p=prompt('Points (e.g. 5 or -2)');if((t==='1'||t==='2')&&p&&!isNaN(+p)){S.add(+t-1,+p,'other');render();}}),
         h('div',{class:'grow'}),
         btn('🏁 Announce winner','big',()=>announce()),
-        btn('Reset all','red sm',()=>{if(confirm('Clear ALL scores?')){store.set('log',[]);render();}}))),
+        btn('Reset scores only','ghost sm',()=>{if(confirm('Clear all scores? Game progress stays.')){store.set('log',[]);render();}}))),
+    h('div',{class:'card',style:'border-color:rgba(239,71,111,.5)'},
+      h('h2',{},'🔄 Start over — everything'),
+      h('p',{class:'muted'},'Wipes scores, team names, quiz progress, Antakshari, Tambola (called songs & winners), Mafia game, Couples and used cards on THIS device. Your PIN stays. Guests’ phones are not affected — they can use “Start over” on their own screen.'),
+      btn('Start the whole night over','red',()=>{if(confirm('Start EVERYTHING over? Scores, team names and all game progress on this device will be wiped.')&&confirm('Really sure? This cannot be undone.')){try{Object.keys(localStorage).filter(k=>k.startsWith('dg_')&&k!=='dg_pin').forEach(k=>localStorage.removeItem(k));}catch(e){}toast('Fresh start! 🪔');render();}})),
     h('div',{class:'card'},
       h('h2',{},'📲 Share with guests'),
       h('p',{class:'muted'},'Guests only see phone games — no quiz answers, no scoreboard.'),
@@ -583,7 +587,7 @@ function hostTambola(){
     out.append(h('div',{class:'row',style:'margin-top:10px'},PRIZES.map(([k,label,,fn])=>h('span',{class:'pill',style:fn(marks)?'background:var(--teal);color:var(--ink)':''},(fn(marks)?'✅ ':'❌ ')+label))));
   };
   nameIn.addEventListener('keydown',e=>{if(e.key==='Enter')verify();});
-  wrap.append(h('div',{class:'card'},h('h2',{},'🔍 Verify a claim'),h('div',{class:'spacer'}),h('div',{class:'row'},h('div',{class:'grow'},nameIn),btn('Check','teal',verify)),out));
+  wrap.append(h('div',{class:'card'},h('h2',{},'🔍 Verify a claim / show anyone’s ticket'),h('p',{class:'muted',style:'margin:4px 0 0'},'Guest without a phone? Type their name to show their ticket here.'),h('div',{class:'spacer'}),h('div',{class:'row'},h('div',{class:'grow'},nameIn),btn('Check','teal',verify)),out));
   // prizes
   wrap.append(h('div',{class:'card'},h('h2',{},'🏅 Prize winners'),h('div',{class:'spacer'}),
     h('div',{class:'stack'},PRIZES.map(([k,label,desc])=>h('div',{class:'row'},h('div',{class:'grow'},h('b',{},label),' ',h('span',{class:'muted'},desc)),
@@ -610,7 +614,8 @@ function hostMafia(){
   }
   const roles=rolesFor(st.code);const n=roles.length;
   wrap.append(h('div',{class:'card stage'},h('div',{class:'muted'},'Game code — tell everyone'),h('div',{class:'huge',style:'letter-spacing:6px'},st.code),
-    h('div',{class:'muted'},`${n} players · ${roles.filter(r=>r==='dacoit').length} dacoits · 1 Thakur · 1 Basanti`)));
+    h('div',{class:'muted'},`${n} players · ${roles.filter(r=>r==='dacoit').length} dacoits · 1 Thakur · 1 Basanti`),
+    btn('📱 No phones? Pass this device around','violet',()=>passReveal(roles))));
   const script=[['🌙 Night','“Ramgarh, close your eyes…”'],['🔫 Dacoits','“Dacoits, open your eyes. Silently choose a victim… Close your eyes.”'],['🛡️ Basanti','“Basanti, open your eyes. Who do you protect tonight?… Close.”'],['🕵️ Thakur','“Thakur, open your eyes. Point at a suspect.” (nod yes/no) “Close.”'],['☀️ Day','“Ramgarh, wake up! Last night…” → reveal → discuss → vote one out.']];
   wrap.append(h('div',{class:'card'},h('h2',{},'Narrator script'),h('div',{class:'spacer'}),h('div',{class:'stack'},script.map(([a,b])=>h('div',{},h('b',{},a+'  '),h('span',{class:'muted'},b))))));
   const tbl=h('table',{class:'roles-table'},roles.map((r,i)=>h('tr',{class:st.dead.includes(i)?'dead':''},
@@ -622,6 +627,26 @@ function hostMafia(){
     aliveD===0?h('div',{class:'big ans'},'🌾 Villagers win!'):aliveD>=aliveV?h('div',{class:'big',style:'color:var(--red)'},'🔫 Dacoits win!'):h('div',{class:'muted'},`Alive: ${aliveD+aliveV} (${st.show?aliveD+' dacoits':'hidden'})`)));
   wrap.append(btn('New Mafia game','red sm',()=>{if(confirm('New game with a new code?')){store.set('mafia',null);render();}}));
   return wrap;
+}
+
+function passReveal(roles){
+  const fs=fullscreen();let i=0;
+  const body=h('div',{class:'stage',style:'flex:1;padding:20px;max-width:560px;margin:0 auto;width:100%'});
+  fs.append(h('div',{class:'bar'},btn('✕ Close','ghost sm',()=>fs.remove())),body);
+  const paint=()=>{
+    body.innerHTML='';
+    if(i>=roles.length){body.append(h('div',{style:'font-size:70px'},'🌙'),h('div',{class:'big'},'Everyone has their role!'),h('p',{class:'muted'},'Hand the device back to the host.'),btn('Done','big',()=>fs.remove()));return;}
+    const R=ROLES[roles[i]];
+    const front=h('div',{class:'stack center'},h('div',{class:'em'},'🃏'),h('div',{class:'big'},'Seat '+(i+1)),h('div',{class:'muted'},'Press & hold to see your role'));
+    const back=h('div',{class:'stack center',style:'display:none'},h('div',{class:'em'},R.em),h('div',{class:'big'},R.name),h('p',{style:'margin:0;font-weight:600'},R.desc));
+    const card=h('div',{class:'rolecard',style:'width:100%;background:linear-gradient(160deg,#40197a,#1d0b3a);border:2px solid var(--line)'},front,back);
+    card.addEventListener('pointerdown',e=>{e.preventDefault();front.style.display='none';back.style.display='';card.style.background=R.bg;});
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>card.addEventListener(ev,()=>{front.style.display='';back.style.display='none';card.style.background='linear-gradient(160deg,#40197a,#1d0b3a)';}));
+    card.addEventListener('contextmenu',e=>e.preventDefault());
+    body.append(h('div',{class:'muted'},`Pass to seat ${i+1} of ${roles.length}`),card,
+      btn(i+1<roles.length?`Seen it → pass to seat ${i+2}`:'Seen it → back to host','big',()=>{i++;paint();}));
+  };
+  paint();
 }
 
 /* couples */
@@ -645,18 +670,27 @@ function hostCouples(){
 /* phone games scoring hub */
 function hostPhones(){
   const names=S.teams();
+  const st=store.get('words',{mode:'headsup',turn:0});
+  const save=()=>store.set('words',st);
+  const isHU=st.mode==='headsup';
   const wrap=h('div',{class:'stack'});
-  wrap.append(h('div',{class:'card'},h('h2',{},'Phone games'),h('p',{class:'muted'},"These run on players' phones. When a turn ends, the phone shows the points — add them here."),
-    h('p',{class:'muted',style:'margin:0'},'Tip: alternate teams each turn. Same number of turns per team per game.')));
-  const games=[['headsup','🤔 Heads Up','Phone on forehead, team shouts clues. 60s. Points = correct guesses.',[1,2,3,5]],
-    ['charades','🎭 Charades','Actor picks Easy 1 / Medium 2 / Hard 3. 90s.',[1,2,3]],
-    ['pictionary','✏️ Pictionary','Draw the movie on the phone. 60s. 2 points if guessed.',[2]],
-    ['taboo','🚫 Taboo','Describe the movie without the 4 banned words. 60s. Points = net score.',[1,2,3,5]]];
-  for(const [k,title,desc,pts] of games){
-    const custom=(t)=>{const p=prompt(`Points for ${names[t]} (${title})`);if(p&&!isNaN(+p))S.add(t,+p,k);};
-    wrap.append(h('div',{class:'card'},h('div',{class:'row'},h('h3',{class:'grow'},title),rulesBtn(k,'sm')),h('p',{class:'muted',style:'margin:4px 0 10px'},desc),
-      [0,1].map(t=>h('div',{class:'row',style:'margin-bottom:8px'},h('b',{style:'min-width:120px'},names[t]),pts.map(p=>btn('+'+p,'sm t'+t,()=>S.add(t,p,k))),btn('other…','sm ghost',()=>custom(t))))));
-  }
+  wrap.append(h('div',{class:'row'},
+    h('button',{class:'tab'+(isHU?' on':''),onclick:()=>{st.mode='headsup';save();render();}},'🤔 Heads Up'),
+    h('button',{class:'tab'+(!isHU?' on':''),onclick:()=>{st.mode='taboo';save();render();}},'🚫 Taboo')));
+  wrap.append(rulesBar(st.mode));
+  wrap.append(h('div',{class:'team t'+st.turn,style:'justify-content:center;font-size:24px;font-weight:800'},(isHU?'🤔 ':'🚫 ')+names[st.turn]+"'s turn"));
+  wrap.append(h('div',{class:'card stage',style:'min-height:0'},
+    h('p',{class:'muted',style:'margin:0;font-size:18px'},isHU
+      ?'On the TV: the guesser stands with their back to the screen, and their team reads it and gives clues. On a phone: hold this device on the guesser’s forehead.'
+      :'The clue-giver holds this device (or stands facing the screen). One player from the other team watches and hits BUZZ.'),
+    btn('▶ Start 60s round','pink big',()=>runRound({key:'h'+st.mode,secs:60,deck:isHU?HEADSUP:TABOO,renderCard:isHU?headsUpCard:tabooCard,penalty:isHU?0:1,
+      award:{label:names[st.turn],add:(p)=>{if(p)S.add(st.turn,p,st.mode);st.turn=1-st.turn;save();setTimeout(render,600);}}})),
+    btn('Skip to other team','ghost sm',()=>{st.turn=1-st.turn;save();render();})));
+  // fallback: rounds played on guests' own phones
+  const games=[['headsup','🤔 Heads Up',[1,2,3,5]],['taboo','🚫 Taboo',[1,2,3,5]],['charades','🎭 Charades',[1,2,3]],['pictionary','✏️ Pictionary',[2]]];
+  wrap.append(h('div',{class:'card'},h('h3',{},'Played on a guest phone? Add the points here'),h('div',{class:'spacer'}),
+    games.map(([k,title,pts])=>h('div',{style:'margin-bottom:10px'},h('b',{},title),
+      [0,1].map(t=>h('div',{class:'row',style:'margin-top:6px'},h('span',{style:'min-width:120px'},names[t]),pts.map(p=>btn('+'+p,'sm t'+t,()=>S.add(t,p,k)))))))));
   return wrap;
 }
 
@@ -709,8 +743,11 @@ function roundGame({key,title,secs,deck,renderCard,how,netLabel,penalty}){
   const wrap=h('div',{class:'stack'});
   wrap.append(h('div',{class:'card stage'},h('div',{style:'font-size:56px'},title.split(' ')[0]),h('h2',{},title.slice(title.indexOf(' ')+1)),
     h('ol',{class:'muted',style:'text-align:left;margin:0;padding-left:20px'},how.map(x=>h('li',{},x))),
-    btn(`Start ${secs}s round`,'pink big block',()=>start())));
-  function start(){
+    btn(`Start ${secs}s round`,'pink big block',()=>runRound({key,secs,deck,renderCard,penalty}))));
+  return wrap;
+}
+// award: optional {label, add(score)} — host rounds score straight onto the board
+function runRound({key,secs,deck,renderCard,penalty,award}){
     const fs=fullscreen();let score=0,results=[];let cur=deckDraw(key,deck);
     const cardEl=h('div',{class:'stage',style:'flex:1;padding:16px'});
     const scoreEl=h('span',{class:'pill',style:'font-size:18px'},'0');
@@ -728,24 +765,25 @@ function roundGame({key,title,secs,deck,renderCard,how,netLabel,penalty}){
     function end(){
       fs.innerHTML='';
       fs.append(h('div',{class:'stage',style:'flex:1;padding:20px;overflow:auto'},
-        h('div',{style:'font-size:60px'},'⏰'),h('div',{class:'huge pop'},score+' points'),h('div',{class:'muted big'},'Tell the host: +'+Math.max(0,score)+' for your team'),
+        h('div',{style:'font-size:60px'},'⏰'),h('div',{class:'huge pop'},score+' points'),award?null:h('div',{class:'muted big'},'Tell the host: +'+Math.max(0,score)+' for your team'),
         h('div',{class:'calledlist',style:'justify-content:center'},results.map(([c,ok])=>h('span',{style:ok===true?'background:var(--teal);color:var(--ink)':ok==='buzz'?'background:var(--red)':''},(ok===true?'✓ ':ok==='buzz'?'🚨 ':'✗ ')+(Array.isArray(c)?c[0]:c)))),
-        btn('Done','big',()=>fs.remove())));
+        award?h('div',{class:'row',style:'justify-content:center'},btn(`Add ${Math.max(0,score)} to ${award.label} & next team`,'big',()=>{fs.remove();award.add(Math.max(0,score));}),btn("Don't add",'ghost',()=>fs.remove()))
+          :btn('Done','big',()=>fs.remove())));
       if(score>0)confetti(30);
     }
-  }
-  return wrap;
 }
+const headsUpCard=w=>h('div',{class:'huge pop',style:'font-size:clamp(40px,12vw,96px)'},w);
+const tabooCard=([m,ban])=>h('div',{class:'stack center pop'},h('div',{class:'huge'},m),h('div',{class:'muted'},'Don’t say:'),
+      h('div',{class:'stack',style:'gap:6px'},ban.map(b=>h('div',{class:'big',style:'color:var(--red)'},'✗ '+b))));
 function playHeadsUp(){
   return roundGame({key:'headsup',title:'🤔 Heads Up',secs:60,deck:HEADSUP,
     how:['Hold the phone on your forehead, screen facing your team.','Your team shouts clues — acting, hints, anything but the name.','A teammate taps Correct or Pass. Get as many as you can in 60 seconds.'],
-    renderCard:w=>h('div',{class:'huge pop',style:'font-size:clamp(40px,12vw,96px)'},w)});
+    renderCard:headsUpCard});
 }
 function playTaboo(){
   return roundGame({key:'taboo',title:'🚫 Taboo',secs:60,deck:TABOO,penalty:1,
     how:['Describe the movie to your team WITHOUT saying it or any of the 4 banned words.','No acting, no humming, no “sounds like”.','Someone from the OTHER team watches your screen and hits BUZZ if you slip (−1).'],
-    renderCard:([m,ban])=>h('div',{class:'stack center pop'},h('div',{class:'huge'},m),h('div',{class:'muted'},'Don’t say:'),
-      h('div',{class:'stack',style:'gap:6px'},ban.map(b=>h('div',{class:'big',style:'color:var(--red)'},'✗ '+b))))});
+    renderCard:tabooCard});
 }
 function playCharades(){
   const wrap=h('div',{class:'stack'});
