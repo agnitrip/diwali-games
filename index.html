@@ -737,7 +737,14 @@ function hostPhones(fixed){
       ?'On the TV: the guesser stands with their back to the screen, and their team reads it and gives clues. On a phone: hold this device on the guesser’s forehead.'
       :'The clue-giver holds this device (or stands facing the screen). One player from the other team watches and hits BUZZ.'),
     btn('▶ Start 60s round','pink big',()=>runRound({key:'h'+st.mode,secs:60,deck:isHU?HEADSUP:TABOO,renderCard:isHU?headsUpCard:tabooCard,penalty:isHU?0:1,
-      award:{teams:names,add:(i,p)=>{if(p)S.add(i,p,st.mode);}}}))));
+      award:{teams:names,add:(i,p)=>{if(p)S.add(i,p,st.mode);}}})),
+    h('div',{class:'muted',style:'font-size:15px'},'Tap Start — the words then show full screen, one at a time, with ✓ Correct / Pass.')));
+  // every word in the deck, so the host can see what's coming; played ones are struck through
+  const deck=isHU?HEADSUP:TABOO,used=store.get('used_h'+st.mode,[]);
+  const label=x=>Array.isArray(x)?x[0]+' — not: '+x[1].join(', '):x;
+  wrap.append(h('details',{class:'card'},h('summary',{style:'cursor:pointer;font-weight:800;font-size:20px'},`📋 All ${isHU?'Heads Up words':'Taboo cards'} (${deck.length}) — ${used.length} played`),
+    h('div',{class:'calledlist',style:'margin-top:12px'},deck.map(x=>{const u=used.includes(JSON.stringify(x));return h('span',{style:'font-size:16px;'+(u?'opacity:.4;text-decoration:line-through':'')},label(x));})),
+    used.length?h('div',{style:'margin-top:10px'},btn('Reset played words','ghost sm',()=>{store.set('used_h'+st.mode,[]);render();})):null));
   // fallback: rounds played on guests' own phones
   const games=[['headsup','🤔 Heads Up',[1,2,3,5]],['taboo','🚫 Taboo',[1,2,3,5]],['charades','🎭 Charades',[1,2,3]],['pictionary','✏️ Pictionary',[2]]];
   wrap.append(h('div',{class:'card'},h('h3',{},'Played on a guest phone? Add the points here'),h('div',{class:'spacer'}),
