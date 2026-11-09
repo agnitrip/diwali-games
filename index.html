@@ -267,7 +267,7 @@ function scoreStrip(){
   return stripEl;
 }
 // which game a tap on the score bar counts toward
-function currentGame(){const v=location.hash.split('/')[2]||'';if(v==='act')return store.get('act',{}).mode||'charades';if(v==='phones')return store.get('words',{}).mode||'headsup';return ['quiz','antakshari','couples'].includes(v)?v:'other';}
+function currentGame(){const v=location.hash.split('/')[2]||'';if(['headsup','taboo','pictionary','charades'].includes(v))return v;if(v==='act')return store.get('act',{}).mode||'charades';if(v==='phones')return store.get('words',{}).mode||'headsup';return ['quiz','antakshari','couples'].includes(v)?v:'other';}
 function paintStrip(bumped){
   if(!stripEl||!stripEl.isConnected)return;
   const t=S.totals();
@@ -389,12 +389,14 @@ function pinScreen(){
 }
 
 /* ---------------- host ---------------- */
-const HOST_TABS=[['score','🏆 Scoreboard'],['act','🎭 Charades & Pictionary'],['quiz','🎬 Quiz'],['antakshari','🎤 Antakshari'],['tambola','🎶 Tambola'],['mafia','🔫 Mafia'],['couples','💑 Couples'],['phones','🤔 Heads Up & Taboo']];
+const HOST_TABS=[['score','🏆 Scoreboard'],['headsup','1 · 🤔 Heads Up'],['pictionary','2 · ✏️ Pictionary'],['quiz','3 · 🎬 Filmy Quiz'],['tambola','4 · 🎶 Song Tambola'],['charades','5 · 🎭 Dumb Charades'],['couples','6 · 💑 Couples'],['antakshari','7 · 🎤 Antakshari (if time)']];
+const EXTRA_TABS=[['taboo','🚫 Taboo'],['mafia','🔒 Mafia']];
 function hostView(view){
   app.append(topbar(btn('Lock','ghost sm',()=>{try{sessionStorage.removeItem('dg_pin');localStorage.removeItem('dg_pin');}catch(e){}HOST=null;go('/');})));
   app.append(scoreStrip());
-  app.append(h('div',{class:'tabs'},HOST_TABS.map(([k,l])=>h('button',{class:'tab'+(k===view?' on':''),onclick:()=>go('/host/'+k)},l))));
-  const views={score:hostScore,act:hostAct,quiz:hostQuiz,antakshari:hostAntakshari,tambola:hostTambola,mafia:hostMafia,couples:hostCouples,phones:hostPhones};
+  const tab=([k,l],x)=>h('button',{class:'tab'+(k===view?' on':''),style:x||'',onclick:()=>go('/host/'+k)},l);
+  app.append(h('div',{class:'tabs'},HOST_TABS.map(t=>tab(t)),h('span',{class:'muted',style:'align-self:center;font-size:14px;margin-left:6px'},'Extras:'),EXTRA_TABS.map(t=>tab(t,'opacity:.65;font-size:14px'))));
+  const views={score:hostScore,headsup:()=>hostPhones('headsup'),taboo:()=>hostPhones('taboo'),pictionary:()=>hostAct('pictionary'),charades:()=>hostAct('charades'),act:hostAct,quiz:hostQuiz,antakshari:hostAntakshari,tambola:hostTambola,mafia:hostMafia,couples:hostCouples,phones:hostPhones};
   app.append((views[view]||hostScore)());
 }
 function guestLink(){return location.origin+location.pathname+'#/play';}
@@ -425,11 +427,11 @@ function hostScore(){
       h('p',{class:'muted'},'Guests only see phone games — no quiz answers, no scoreboard.'),
       h('div',{class:'row'},h('a',{class:'btn teal',href:share,target:'_blank',style:'text-decoration:none'},'Share on WhatsApp'),
         btn('Copy link','ghost',()=>{navigator.clipboard&&navigator.clipboard.writeText(guestLink());toast('Link copied');}))),
-    h('div',{class:'card'},h('h2',{},'Suggested run of show'),
-      h('ol',{class:'muted',style:'margin:8px 0 0;padding-left:22px;line-height:1.7'},
-        h('li',{},'Heads Up warm-up — 10 min (📱)'),h('li',{},'Charades / Pictionary / Taboo — 20 min (📱)'),
-        h('li',{},'Filmy Quiz — 20 min (🎬)'),h('li',{},'Antakshari with twist wheel — 15 min (🎤)'),
-        h('li',{},'Couples Face-Off — 10 min (💑)'),h('li',{},'Song Tambola finale — 20 min (🎶)'),h('li',{},'Ramgarh Mafia for the night owls (🔫)'))));
+    h('div',{class:'card'},h('h2',{},'Tonight’s run of show'),
+      h('ol',{style:'margin:8px 0 0;padding-left:22px;line-height:1.8;font-size:18px'},
+        [['headsup','🤔 Heads Up — the easy opener','10 min'],['pictionary','✏️ Pictionary','15 min'],['quiz','🎬 Filmy Quiz — sit-down breather','15 min'],['tambola','🎶 Song Tambola — everyone plays','20 min'],['charades','🎭 Dumb Charades','20 min'],['couples','💑 Couples Face-Off — optional','10 min'],['antakshari','🎤 Antakshari — if time permits','15 min']]
+        .map(([k,t,m])=>h('li',{},h('a',{href:'#/host/'+k,style:'color:#fff'},t),' ',h('span',{class:'muted'},'· '+m)))),
+      h('p',{class:'muted',style:'margin:8px 0 0;font-size:14px'},'About 1 hr 45 min in all. Extras (Taboo, Mafia) are at the end of the tab bar.')));
 }
 function announce(){
   const t=S.totals(),n=S.teams();
@@ -444,9 +446,10 @@ function announce(){
 }
 
 /* charades & pictionary, host-run */
-function hostAct(){
+function hostAct(fixed){
   const names=S.teams();
   const st=store.get('act',{mode:'charades',turn:0,level:'medium',card:null});
+  if(fixed&&st.mode!==fixed){st.mode=fixed;st.card=null;}
   const save=()=>store.set('act',st);
   const isCh=st.mode==='charades';
   const pts=isCh?CHARADES[st.level].pts:2,secs=isCh?90:60;
@@ -454,7 +457,7 @@ function hostAct(){
   if(!st.card)newCard();
   const nextCard=()=>{st.card=null;save();render();};
   const wrap=h('div',{class:'stack'});
-  wrap.append(h('div',{class:'row'},
+  if(!fixed)wrap.append(h('div',{class:'row'},
     h('button',{class:'tab'+(isCh?' on':''),onclick:()=>{st.mode='charades';st.card=null;save();render();}},'🎭 Dumb Charades'),
     h('button',{class:'tab'+(!isCh?' on':''),onclick:()=>{st.mode='pictionary';st.card=null;save();render();}},'✏️ Pictionary')));
   wrap.append(isCh
@@ -635,6 +638,11 @@ function rolesFor(code){const m=String(code||'').toUpperCase().replace(/\s/g,'')
 function hostMafia(){
   let st=store.get('mafia',null);
   const wrap=h('div',{class:'stack'});
+  if(!store.get('mafiaOpen',false)){
+    wrap.append(h('div',{class:'card stage'},h('div',{style:'font-size:60px'},'🔒'),h('h2',{},'Mafia is parked for tonight'),h('p',{class:'muted',style:'margin:0'},'Probably no time — but if the night runs long, it’s ready.'),
+      btn('Unlock Mafia anyway','ghost',()=>{store.set('mafiaOpen',true);render();})));
+    return wrap;
+  }
   const make=(n)=>{const L='ABCDEFGHJKLMNPRSTUVWXYZ';let c='';for(let i=0;i<3;i++)c+=L[Math.floor(Math.random()*L.length)];st={code:c+n,dead:[],show:false};store.set('mafia',st);render();};
   wrap.append(rulesBar('mafia'));
   if(!st){
@@ -713,13 +721,14 @@ function hostCouples(){
 }
 
 /* phone games scoring hub */
-function hostPhones(){
+function hostPhones(fixed){
   const names=S.teams();
   const st=store.get('words',{mode:'headsup',turn:0});
+  if(fixed)st.mode=fixed;
   const save=()=>store.set('words',st);
   const isHU=st.mode==='headsup';
   const wrap=h('div',{class:'stack'});
-  wrap.append(h('div',{class:'row'},
+  if(!fixed)wrap.append(h('div',{class:'row'},
     h('button',{class:'tab'+(isHU?' on':''),onclick:()=>{st.mode='headsup';save();render();}},'🤔 Heads Up'),
     h('button',{class:'tab'+(!isHU?' on':''),onclick:()=>{st.mode='taboo';save();render();}},'🚫 Taboo')));
   wrap.append(rulesBar(st.mode));
@@ -748,7 +757,7 @@ function playView(view){
   }
   app.append(topbar());
   app.append(h('h1',{class:'big',style:'margin:6px 0 4px'},'Pick a game'),h('p',{class:'muted',style:'margin:0 0 14px'},'The host will tell you which one is up.'));
-  const tiles=[['tambola','🎶','Song Tambola','Your ticket','#ffb703'],['headsup','🤔','Heads Up','Forehead guessing','#ff4d8d'],['charades','🎭','Charades','Act it out','#06d6a0'],['pictionary','✏️','Pictionary','Draw it','#4cc9f0'],['taboo','🚫','Taboo','Don’t say it','#fb8500'],['mafia','🔫','Ramgarh Mafia','Secret role','#9b5de5']];
+  const tiles=[['headsup','🤔','Heads Up','Forehead guessing','#ff4d8d'],['pictionary','✏️','Pictionary','Draw it','#4cc9f0'],['tambola','🎶','Song Tambola','Your ticket','#ffb703'],['charades','🎭','Charades','Act it out','#06d6a0'],['taboo','🚫','Taboo','Don’t say it','#fb8500']];
   app.append(h('div',{class:'tiles'},tiles.map(([k,em,t,s,c])=>h('button',{class:'tile',style:`background:${c}`,onclick:()=>go('/play/'+k)},h('div',{class:'em'},em),h('div',{},h('b',{},t),h('small',{},s))))));
   app.append(h('div',{class:'center',style:'margin-top:26px'},
     h('p',{class:'muted',style:'font-size:14px;margin:0 0 8px'},'Refreshing is safe — your ticket, marks and Mafia role are saved on this phone.'),
