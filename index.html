@@ -831,7 +831,11 @@ function runRound({key,secs,deck,renderCard,penalty,award}){
       if(score>0)confetti(30);
     }
 }
-const headsUpCard=w=>h('div',{class:'huge pop',style:'font-size:clamp(40px,12vw,96px)'},w);
+// the word is the "question": the guesser can't see it, their team gives clues
+const headsUpCard=w=>{const star=HEADSUP.indexOf(w)>=HEADSUP.indexOf('Shah Rukh Khan');return h('div',{class:'stack center pop'},
+  h('div',{class:'muted',style:'font-size:18px'},'🗣️ Team: give clues for this '+(star?'⭐ Bollywood star':'🎬 film character')),
+  h('div',{class:'huge',style:'font-size:clamp(40px,12vw,96px)'},w),
+  h('div',{class:'muted',style:'font-size:16px'},'Guesser: don’t look! · No saying the name · Tap ✓ when guessed'));};
 const tabooCard=([m,ban])=>h('div',{class:'stack center pop'},h('div',{class:'huge'},m),h('div',{class:'muted'},'Don’t say:'),
       h('div',{class:'stack',style:'gap:6px'},ban.map(b=>h('div',{class:'big',style:'color:var(--red)'},'✗ '+b))));
 function playHeadsUp(){
