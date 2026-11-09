@@ -169,6 +169,8 @@ const SONGS = [
   ["Kala Chashma","Baar Baar Dekho"],["Bole Chudiyan","Kabhi Khushi Kabhie Gham"],["It's the Time to Disco","Kal Ho Naa Ho"],["Deewani Mastani","Bajirao Mastani"],
   ["Raataan Lambiyan","Shershaah"],["Dus Bahane","Dus"],["Gerua","Dilwale"],["Mere Sapno Ki Rani","Aradhana"]
 ];
+// iTunes track ids for 30-second previews (original film versions, checked by hand)
+const ITUNES = {"Tujhe Dekha To": 1352484512, "Chaiyya Chaiyya": 1130322151, "Kal Ho Naa Ho": 300388792, "Tum Hi Ho": 1073359419, "Kajra Re": 673539855, "London Thumakda": 1116194835, "Badtameez Dil": 1070912803, "Gallan Goodiyaan": 1071192712, "Mauja Hi Mauja": 1134725346, "Chammak Challo": 1123225144, "Kesariya": 1635014240, "Tere Bina": 264849919, "Dil Chahta Hai": 1138970381, "Kuch Kuch Hota Hai": 300388376, "Ainvayi Ainvayi": 797516739, "Desi Girl": 293939865, "Sheila Ki Jawani": 1123140184, "Munni Badnaam Hui": 1123346653, "Jai Ho": 1358474690, "Dola Re Dola": 1442398478, "Tujh Mein Rab Dikhta Hai": 673596462, "Señorita": 1116365492, "Balam Pichkari": 1070912810, "Nagada Sang Dhol": 1842063594, "Lungi Dance": 6778826690, "Kar Gayi Chull": 1756254589, "Channa Mereya": 1169015785, "Apna Time Aayega": 1529556364, "Ghungroo": 1478998926, "Jhoome Jo Pathaan": 1659644978, "What Jhumka?": 1746500878, "Chaleya": 1702461667, "Ek Do Teen": 1117379334, "Didi Tera Devar Deewana": 1641853013, "Pehla Nasha": 1340749968, "Hawa Hawai": 1151397900, "Kala Chashma": 1777373844, "Bole Chudiyan": 300388195, "It's the Time to Disco": 300388929, "Deewani Mastani": 1842065694, "Raataan Lambiyan": 1580955743, "Dus Bahane": 1138205144, "Gerua": 1057567670, "Mere Sapno Ki Rani": 1338718015};
 const HEADSUP = ["Gabbar Singh","Mogambo","Basanti","Thakur","Raj Malhotra","Simran","Poo","Geet","Munna Bhai","Circuit","Rancho","Chatur","Virus (3 Idiots)","Crime Master Gogo","Baburao","Chulbul Pandey","Devdas","Chandramukhi","Kabir Khan (Chak De)","Rani (Queen)","Bajirao","Jaadoo","Mr. India","Anjali","Manjulika","Pushpa",
   "Shah Rukh Khan","Amitabh Bachchan","Salman Khan","Aamir Khan","Rekha","Madhuri Dixit","Sridevi","Kajol","Deepika Padukone","Ranveer Singh","Alia Bhatt","Priyanka Chopra","Hrithik Roshan","Akshay Kumar","Kareena Kapoor","Govinda","Rajinikanth","Dharmendra","Hema Malini","Anil Kapoor","Johnny Lever","Paresh Rawal","Kangana Ranaut","Ranbir Kapoor","Katrina Kaif","Shahid Kapoor","Vicky Kaushal","A.R. Rahman","Lata Mangeshkar","Kishore Kumar","Arijit Singh","Karan Johar","Farah Khan","Dev Anand"];
 const CHARADES = {
@@ -559,6 +561,22 @@ function hostAntakshari(){
 }
 
 /* tambola */
+const player=new Audio();let previews=null;
+player.addEventListener('play',()=>paintPlay());player.addEventListener('pause',()=>paintPlay());player.addEventListener('ended',()=>paintPlay());
+function paintPlay(){const b=document.getElementById('playbtn');if(b)b.textContent=player.paused?'▶ Play clip':'⏸ Pause';}
+async function loadPreviews(){
+  if(previews)return previews;
+  const cached=store.get('previews',null);
+  if(cached&&Date.now()-cached.at<6*3600e3){previews=cached.map;return previews;}
+  try{
+    const j=await (await fetch('https://itunes.apple.com/lookup?id='+Object.values(ITUNES).join(',')+'&country=IN')).json();
+    const byId={};j.results.forEach(r=>{if(r.previewUrl)byId[r.trackId]=r.previewUrl;});
+    previews={};for(const [t,id] of Object.entries(ITUNES))if(byId[id])previews[t]=byId[id];
+    store.set('previews',{at:Date.now(),map:previews});
+  }catch(e){previews=null;}
+  return previews;
+}
+function playSong(title){const u=previews&&previews[title];if(!u){toast('No clip for this one — use YouTube');return;}if(player.src!==u)player.src=u;player.currentTime=0;player.play().catch(()=>toast('Tap ▶ Play clip'));}
 function ticketFor(name){return shuffle(SONGS.map((s,i)=>i),mulberry32(hashStr('ticket|'+norm(name)))).slice(0,12);}
 const PRIZES=[['early','Early Five','Any 5 songs marked',(c)=>c.filter(Boolean).length>=5],
   ['line','First Line','Any full row of 3',(c)=>[0,1,2,3].some(r=>c[r*3]&&c[r*3+1]&&c[r*3+2])],
@@ -572,16 +590,23 @@ function hostTambola(){
   wrap.append(rulesBar('tambola'));
   const called=g.order.slice(0,g.n);
   const cur=g.n?SONGS[g.order[g.n-1]]:null;
+  const auto=store.get('autoplay',true);
+  if(!previews)loadPreviews().then(p=>{if(p&&/tambola/.test(location.hash))render();});
   const yt=s=>'https://www.youtube.com/results?search_query='+encodeURIComponent(s[0]+' '+s[1]+' song');
   const sp=s=>'https://open.spotify.com/search/'+encodeURIComponent(s[0]+' '+s[1]);
   wrap.append(h('div',{class:'card stage'},
     h('span',{class:'pill'},`Song ${g.n} of ${SONGS.length}`),
     cur?h('div',{class:'stack center'},h('div',{class:'huge pop'},cur[0]),h('div',{class:'big muted'},'🎬 '+cur[1]),
-      h('div',{class:'row',style:'justify-content:center'},h('a',{class:'btn sm pink',href:yt(cur),target:'_blank',style:'text-decoration:none'},'▶ YouTube'),h('a',{class:'btn sm teal',href:sp(cur),target:'_blank',style:'text-decoration:none'},'▶ Spotify')))
+      previews&&previews[cur[0]]?h('div',{class:'row',style:'justify-content:center'},
+        h('button',{class:'btn big teal',id:'playbtn',onclick:()=>{if(player.paused){if(player.src!==previews[cur[0]])playSong(cur[0]);else player.play();}else player.pause();}},player.paused?'▶ Play clip':'⏸ Pause'),
+        btn('🔁 From start','ghost',()=>playSong(cur[0])))
+        :h('div',{class:'muted'},previews?'No clip for this song — use the links below':'Loading 30-second clips…'),
+      h('div',{class:'row',style:'justify-content:center'},h('span',{class:'muted',style:'font-size:14px'},'Full song:'),h('a',{class:'btn sm ghost',href:yt(cur),target:'_blank',style:'text-decoration:none'},'YouTube'),h('a',{class:'btn sm ghost',href:sp(cur),target:'_blank',style:'text-decoration:none'},'Spotify')))
       :h('div',{class:'big muted'},'Ready when you are'),
     h('div',{class:'row',style:'justify-content:center'},
-      btn(g.n?'Next song 🎵':'Call first song 🎵','big',()=>{if(g.n<SONGS.length){g.n++;store.set('tambola',g);ding();render();}}),
-      g.n?btn('↩︎ Undo','ghost',()=>{g.n--;store.set('tambola',g);render();}):null)));
+      btn(g.n?'Next song 🎵':'Call first song 🎵','big',()=>{if(g.n<SONGS.length){g.n++;store.set('tambola',g);if(auto)playSong(SONGS[g.order[g.n-1]][0]);else ding();render();}}),
+      g.n?btn('↩︎ Undo','ghost',()=>{player.pause();g.n--;store.set('tambola',g);render();}):null),
+    h('label',{class:'muted row',style:'justify-content:center;font-size:15px'},h('input',{type:'checkbox',checked:auto,onchange:e=>store.set('autoplay',e.target.checked)}),'Auto-play the clip when I tap Next')));
   // verify
   const nameIn=h('input',{class:'field',placeholder:"Player's name exactly as they typed it"});
   const out=h('div',{});
@@ -659,6 +684,12 @@ function hostCouples(){
   const qs=HOST.couples;const st=store.get('couples',{i:0,shown:false});const names=S.teams();
   const wrap=h('div',{class:'stack'});
   wrap.append(rulesBar('couples'));
+  const list=store.get('couplesList',[]);const c=st.c||0;
+  const editList=()=>{const v=prompt('Type the couples, separated by commas.\nPut partners together with &, e.g.\nPriya & Rahul, Neha & Vikram',list.join(', '));if(v!=null){store.set('couplesList',v.split(',').map(x=>x.trim()).filter(Boolean));st.c=0;store.set('couples',st);render();}};
+  wrap.append(list.length
+    ?h('div',{class:'card'},h('div',{class:'row'},h('div',{class:'grow'},h('div',{class:'muted'},'Up now'),h('div',{class:'big'},'💑 '+list[c%list.length])),btn('Next couple →','sm',()=>{st.c=(c+1)%list.length;store.set('couples',st);render();}),btn('✏️ Edit','ghost sm',editList)),
+        h('div',{class:'calledlist',style:'margin-top:10px'},list.map((x,k)=>h('span',{style:k===c%list.length?'background:var(--gold);color:var(--ink)':'cursor:pointer',onclick:()=>{st.c=k;store.set('couples',st);render();}},x))))
+    :h('div',{class:'card row'},h('div',{class:'grow'},h('b',{},'Who are the couples?'),h('div',{class:'muted'},'Add them once and each question shows which couple is up.')),btn('➕ Add couples','pink',editList)));
   const card=h('div',{class:'card stage'},h('span',{class:'pill'},`Question ${st.i+1} / ${qs.length}`));
   if(!st.shown)card.append(h('div',{class:'hidden-q',onclick:()=>{st.shown=true;store.set('couples',st);render();}},h('div',{class:'big'},'💑 Tap to show question')));
   else card.append(h('div',{class:'huge pop',style:'font-size:clamp(28px,5.5vw,56px)'},qs[st.i]),h('div',{class:'big ans'},'1 · 2 · 3!'));
@@ -668,7 +699,7 @@ function hostCouples(){
     btn('+1 '+names[0],'t0',()=>S.add(0,1,'couples')),btn('+1 '+names[1],'t1',()=>S.add(1,1,'couples'))));
   wrap.append(h('div',{class:'row',style:'justify-content:space-between'},
     btn('← Prev','ghost',()=>{st.i=Math.max(0,st.i-1);st.shown=false;store.set('couples',st);render();}),
-    btn('Next →','',()=>{st.i=Math.min(qs.length-1,st.i+1);st.shown=false;store.set('couples',st);render();})));
+    btn('Next →','',()=>{st.i=Math.min(qs.length-1,st.i+1);st.shown=false;if(list.length)st.c=(c+1)%list.length;store.set('couples',st);render();})));
   return wrap;
 }
 
