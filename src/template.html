@@ -389,7 +389,7 @@ function pinScreen(){
 }
 
 /* ---------------- host ---------------- */
-const HOST_TABS=[['score','🏆 Scoreboard'],['headsup','1 · 🤔 Heads Up'],['pictionary','2 · ✏️ Pictionary'],['quiz','3 · 🎬 Filmy Quiz'],['tambola','4 · 🎶 Song Tambola'],['charades','5 · 🎭 Dumb Charades'],['couples','6 · 💑 Couples'],['antakshari','7 · 🎤 Antakshari (if time)']];
+const HOST_TABS=[['score','🏆 Scoreboard'],['quiz','1 · 🎬 Filmy Quiz'],['headsup','2 · 🤔 Heads Up'],['pictionary','3 · ✏️ Pictionary'],['tambola','4 · 🎶 Song Tambola'],['charades','5 · 🎭 Dumb Charades'],['couples','6 · 💑 Couples'],['antakshari','7 · 🎤 Antakshari (if time)']];
 const EXTRA_TABS=[['taboo','🚫 Taboo'],['mafia','🔒 Mafia']];
 function hostView(view){
   app.append(topbar(btn('Lock','ghost sm',()=>{try{sessionStorage.removeItem('dg_pin');localStorage.removeItem('dg_pin');}catch(e){}HOST=null;go('/');})));
@@ -429,7 +429,7 @@ function hostScore(){
         btn('Copy link','ghost',()=>{navigator.clipboard&&navigator.clipboard.writeText(guestLink());toast('Link copied');}))),
     h('div',{class:'card'},h('h2',{},'Tonight’s run of show'),
       h('ol',{style:'margin:8px 0 0;padding-left:22px;line-height:1.8;font-size:18px'},
-        [['headsup','🤔 Heads Up — the easy opener','10 min'],['pictionary','✏️ Pictionary','15 min'],['quiz','🎬 Filmy Quiz — sit-down breather','15 min'],['tambola','🎶 Song Tambola — everyone plays','20 min'],['charades','🎭 Dumb Charades','20 min'],['couples','💑 Couples Face-Off — optional','10 min'],['antakshari','🎤 Antakshari — if time permits','15 min']]
+        [['quiz','🎬 Filmy Quiz — the easy opener','15 min'],['headsup','🤔 Heads Up — get people on their feet','10 min'],['pictionary','✏️ Pictionary','15 min'],['tambola','🎶 Song Tambola — everyone plays','20 min'],['charades','🎭 Dumb Charades','20 min'],['couples','💑 Couples Face-Off — optional','10 min'],['antakshari','🎤 Antakshari — if time permits','15 min']]
         .map(([k,t,m])=>h('li',{},h('a',{href:'#/host/'+k,style:'color:#fff'},t),' ',h('span',{class:'muted'},'· '+m)))),
       h('p',{class:'muted',style:'margin:8px 0 0;font-size:14px'},'About 1 hr 45 min in all. Extras (Taboo, Mafia) are at the end of the tab bar.')));
 }
