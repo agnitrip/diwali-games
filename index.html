@@ -68,8 +68,8 @@ h1,h2,h3{margin:0;line-height:1.1;font-weight:800}
 @keyframes flick{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) scale(1.06)}}
 
 /* score strip */
-.strip{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.team{border-radius:18px;padding:8px 14px;display:flex;align-items:center;gap:10px;color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.3)}
+.strip{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:12px}
+.team{min-width:0;border-radius:18px;padding:8px 14px;display:flex;align-items:center;gap:10px;color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.3)}
 .team.t0{background:var(--t0)}.team.t1{background:var(--t1);color:#fff}
 .team .nm{font-weight:800;font-size:18px;cursor:pointer;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .team .sc{font-size:34px;font-weight:800;line-height:1}
@@ -78,7 +78,7 @@ h1,h2,h3{margin:0;line-height:1.1;font-weight:800}
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
 
 /* tabs */
-.tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;margin-bottom:8px;scrollbar-width:none}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;padding:4px 2px 10px;margin-bottom:8px}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:none;border:0;border-radius:999px;padding:8px 16px;font-weight:700;font-size:16px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer}
 .tab.on{background:#fff;color:var(--ink)}
@@ -147,7 +147,7 @@ table.score th:first-child,table.score td:first-child{text-align:left}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#fff;color:var(--ink);font-weight:800;padding:10px 18px;border-radius:999px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media (max-width:520px){.team .sc{font-size:28px}.team .nm{font-size:16px}#app{padding:10px 12px 40px}}
+@media (max-width:520px){.team{padding:6px 8px;gap:5px}.team button{padding:3px 5px!important;font-size:12px!important}.team .sc{font-size:26px}.team .nm{font-size:14px}#app{padding:10px 12px 40px}}
 </style>
 </head>
 <body>
@@ -406,7 +406,7 @@ function hostScore(){
       h('h2',{},'Scores by game'),h('div',{class:'spacer'}),
       log.length?h('table',{class:'score'},h('tr',{},h('th',{},'Game'),h('th',{},names[0]),h('th',{},names[1])),rows,
         h('tr',{style:'font-weight:800;font-size:22px'},h('td',{},'Total'),h('td',{},tot[0]),h('td',{},tot[1])))
-      :h('p',{class:'muted'},'No points yet. Tap a team name above to rename it.'),
+      :h('p',{class:'muted'},'No points yet. Tap a team’s card above to give +1 (✏️ renames, −1 takes a point away).'),
       h('div',{class:'spacer'}),
       h('div',{class:'row'},
         btn('↩︎ Undo last','ghost sm',()=>{S.undo();render();}),
