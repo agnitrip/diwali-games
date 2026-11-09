@@ -316,7 +316,7 @@ const RULES={
     nope:['Repeating a song already sung','Humming without words'],
     score:'Stuck for 10 seconds = −1 and the turn passes.'},
   couples:{em:'💑',title:'Couples Face-Off',time:'About 10–15 minutes',
-    steps:['Each playing couple picks a number (Couple 1, 2, 3…). Not everyone has to play.','Partners stand apart so they can’t signal each other.','The host reads a question — the same 10 questions for every couple.','On “1-2-3!” both partners of every couple answer at the same time (point at each other for “who” questions). Go couple by couple so everyone can hear.','The host marks each couple whose two answers matched.'],
+    steps:['Each playing couple picks a number (Couple 1, 2, 3…). Not everyone has to play.','Partners stand apart so they can’t signal each other.','The host reads a question — the same 10 questions for every couple.','Go couple by couple: on “1-2-3!” both partners answer at the same time (point at each other for “who” questions).','The host ticks each couple whose two answers matched.'],
     nope:['Looking at your partner for hints','Changing your answer after hearing theirs'],
     score:'+1 per matched answer, 10 questions. Most points = Best Jodi 🏆 (separate from the team score).'}
 };
@@ -689,32 +689,26 @@ function hostCouples(){
   if(!st){
     wrap.append(h('div',{class:'card stage'},h('div',{style:'font-size:56px'},'💑'),h('h2',{},'How many couples are playing?'),
       h('p',{class:'muted',style:'margin:0'},`Each couple picks a number. Every couple answers the same ${qs.length} questions.`),
-      h('div',{class:'row',style:'justify-content:center'},[2,3,4,5].map(n=>btn(String(n),n===5?'pink big':'big',()=>{st={n,i:0,shown:false,hits:qs.map(()=>[])};save();render();})))));
+      h('div',{class:'row',style:'justify-content:center'},[2,3,4,5].map(n=>btn(String(n),n===5?'pink big':'big',()=>{st={n,hits:qs.map(()=>[])};save();render();})))));
     return wrap;
   }
   const nums=[...Array(st.n)].map((_,i)=>i+1);
   const sc=k=>st.hits.filter(x=>x.includes(k)).length;
-  const order=nums.slice().sort((x,y)=>sc(y)-sc(x));
-  wrap.append(h('div',{class:'card'},h('h3',{},'💑 Jodi leaderboard'),
-    h('div',{class:'calledlist',style:'margin-top:10px'},order.map(k=>h('span',{style:'font-size:18px'},`Couple ${k}: ${sc(k)}`)))));
-  if(st.i>=qs.length){
-    const top=sc(order[0]);const win=order.filter(k=>sc(k)===top);
-    wrap.append(h('div',{class:'card stage'},h('div',{style:'font-size:70px'},'🏆'),h('div',{class:'huge pop'},'Best Jodi: Couple '+win.join(' & ')),h('div',{class:'big muted'},`${top} of ${qs.length} matched`),
-      h('div',{class:'row',style:'justify-content:center'},btn('🎉 Celebrate','big',()=>{confetti(80);ding();}),btn('← Back to last question','ghost',()=>{st.i=qs.length-1;st.shown=true;save();render();}))));
-  }else{
-    const card=h('div',{class:'card stage'},h('span',{class:'pill'},`Question ${st.i+1} of ${qs.length}`));
-    if(!st.shown)card.append(h('div',{class:'hidden-q',onclick:()=>{st.shown=true;save();render();}},h('div',{class:'big'},'💑 Tap to show question')));
-    else card.append(h('div',{class:'huge pop',style:'font-size:clamp(28px,5.5vw,56px)'},qs[st.i]),h('div',{class:'big ans'},'Every couple: both partners answer on 1 · 2 · 3!'));
-    wrap.append(card);
-    const hit=st.hits[st.i];
-    wrap.append(h('div',{class:'card'},h('div',{class:'muted',style:'margin-bottom:8px'},'Tap every couple whose answers matched:'),
-      h('div',{class:'row',style:'justify-content:center'},nums.map(k=>btn((hit.includes(k)?'💞 ':'')+'Couple '+k,hit.includes(k)?'teal big':'ghost big',()=>{const j=hit.indexOf(k);if(j>=0)hit.splice(j,1);else{hit.push(k);ding();}save();render();})))));
-    wrap.append(h('div',{class:'row',style:'justify-content:space-between'},
-      btn('← Prev','ghost',()=>{st.i=Math.max(0,st.i-1);st.shown=true;save();render();}),
-      btn(st.i+1<qs.length?'Next question →':'Finish 🏆','',()=>{st.i++;st.shown=false;save();render();if(st.i>=qs.length)confetti(80);})));
-  }
-  wrap.append(h('div',{class:'row'},btn('New Couples game','red sm',()=>{if(confirm('Start Couples Face-Off over?')){store.set('cpl2',null);render();}}),
-    h('span',{class:'muted',style:'font-size:14px'},'Couple points are separate from the team score — tap a team card above if you want to reward a team too.')));
+  const top=Math.max(...nums.map(sc));
+  const cell='padding:6px;text-align:center;border-bottom:1px solid var(--line)';
+  const tbl=h('table',{style:'width:100%;border-collapse:collapse;font-size:17px'},
+    h('tr',{},h('th',{style:'text-align:left;padding:6px;border-bottom:1px solid var(--line)'},'Question'),nums.map(k=>h('th',{style:cell+';white-space:nowrap'},'Couple '+k))),
+    qs.map((q,i)=>h('tr',{},h('td',{style:'padding:8px 6px;border-bottom:1px solid var(--line)'},h('b',{},(i+1)+'. '),q),
+      nums.map(k=>{const on=st.hits[i].includes(k);return h('td',{style:cell},h('button',{class:'btn sm '+(on?'teal':'ghost'),style:'min-width:46px',title:'Tap if Couple '+k+' matched',
+        onclick:()=>{const x=st.hits[i],j=x.indexOf(k);if(j>=0)x.splice(j,1);else{x.push(k);ding();}save();render();}},on?'✓':'·'));}))),
+    h('tr',{style:'font-size:22px;font-weight:800'},h('td',{style:'padding:10px 6px'},'Total'),nums.map(k=>h('td',{style:'text-align:center;padding:10px 6px'+(top>0&&sc(k)===top?';color:var(--gold)':'')},(top>0&&sc(k)===top?'🏆 ':'')+sc(k)))));
+  wrap.append(h('div',{class:'card',style:'overflow-x:auto'},h('p',{class:'muted',style:'margin:0 0 8px'},'Tap a box when that couple’s answers match. Tap again to undo.'),tbl));
+  const win=nums.filter(k=>top>0&&sc(k)===top);
+  wrap.append(h('div',{class:'row'},
+    win.length?btn('🏆 Announce Best Jodi','big',()=>{const fs=h('div',{class:'fs',onclick:()=>fs.remove()});fs.append(h('div',{class:'stage',style:'flex:1;padding:20px'},h('div',{style:'font-size:90px'},'💑🏆'),h('div',{class:'huge pop'},'Best Jodi: Couple '+win.join(' & ')),h('div',{class:'big muted'},`${top} of ${qs.length} matched`),h('p',{class:'muted'},'Tap anywhere to close')));document.body.append(fs);confetti(80);ding();}):null,
+    h('div',{class:'grow'}),
+    btn('New Couples game','red sm',()=>{if(confirm('Clear the Couples grid?')){store.set('cpl2',null);render();}})));
+  wrap.append(h('p',{class:'muted',style:'font-size:14px;margin:0'},'Couple points are separate from the team score — tap a team card above if you want to reward a team too.'));
   return wrap;
 }
 
